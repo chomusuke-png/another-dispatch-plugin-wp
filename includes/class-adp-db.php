@@ -46,7 +46,7 @@ class ADP_DB {
      */
     public function get_subscribers() {
         global $wpdb;
-        return $wpdb->get_results( "SELECT email FROM {$this->table_name}", ARRAY_A );
+        return $wpdb->get_results( "SELECT * FROM {$this->table_name}", ARRAY_A );
     }
     
     /**
@@ -59,7 +59,7 @@ class ADP_DB {
         $query = $wpdb->prepare( "SELECT id FROM {$this->table_name} WHERE email = %s", $email );
         return (bool) $wpdb->get_var( $query );
     }
-    
+
     /**
      * Obtiene la cantidad total de suscriptores.
      *
