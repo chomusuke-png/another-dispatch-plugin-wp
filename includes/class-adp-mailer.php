@@ -30,7 +30,14 @@ class ADP_Mailer {
         $blog_name      = get_bloginfo( 'name' );
         $post_title     = $post->post_title;
         $post_link      = get_permalink( $post->ID );
-        $featured_image = get_the_post_thumbnail_url( $post->ID, 'large' ); // URL de la imagen destacada
+        $featured_image = get_the_post_thumbnail_url( $post->ID, 'full' );
+
+        if ( empty( $featured_image ) && isset( $_POST['_thumbnail_id'] ) ) {
+            $thumbnail_id = intval( $_POST['_thumbnail_id'] );
+            if ( $thumbnail_id > 0 ) {
+                $featured_image = wp_get_attachment_image_url( $thumbnail_id, 'full' );
+            }
+        }
         
         // Aplicar filtros para renderizar shortcodes, imágenes, párrafos, etc.
         $post_content   = apply_filters( 'the_content', $post->post_content );
@@ -48,7 +55,7 @@ class ADP_Mailer {
             'From: ' . $blog_name . ' <' . get_option( 'admin_email' ) . '>'
         );
 
-        // Enviar en bucle (Nota: En producción masiva esto debería usar una cola/cron)
+        // Enviar en bucle
         foreach ( $subscribers as $subscriber ) {
             wp_mail( $subscriber['email'], $subject, $message, $headers );
         }

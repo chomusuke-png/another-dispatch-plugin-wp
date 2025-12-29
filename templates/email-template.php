@@ -44,18 +44,17 @@
                 <h2 style="margin-top: 0;"><?php echo esc_html( $post_title ); ?></h2>
 
                 <div>
-                    <?php echo $post_content; // Ya viene sanitizado y con filtros de WP ?>
+                    <?php echo $post_content; ?>
                 </div>
 
                 <div style="text-align: center;">
-                    <a href="<?php echo esc_url( $post_link ); ?>" class="button">Ver en el navegador</a>
+                    <a href="<?php echo esc_url( $post_link ); ?>" class="button">Ir a ver</a>
                 </div>
             </div>
 
             <div class="footer">
                 <p>Recibiste este correo porque estás suscrito a <?php echo esc_html( $blog_name ); ?>.</p>
-                </div>
-
+            </div>
         </div>
     </div>
 </body>
