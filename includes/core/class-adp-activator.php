@@ -20,7 +20,7 @@ class ADP_Activator {
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             email varchar(100) NOT NULL,
-            created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY email (email)
         ) $charset_collate;";

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 2.1
+ * Version: 2.2
  * Author: Zumito
  */
 
@@ -20,6 +20,7 @@ require_once ADP_PATH . 'includes/admin/class-adp-admin.php';
 require_once ADP_PATH . 'includes/public/class-adp-shortcode.php';
 require_once ADP_PATH . 'includes/public/class-adp-subscribe.php';
 require_once ADP_PATH . 'includes/public/class-adp-unsubscribe.php';
+require_once ADP_PATH . 'includes/public/class-adp-widget.php';
 require_once ADP_PATH . 'includes/emails/class-adp-post-watcher.php';
 require_once ADP_PATH . 'includes/emails/class-adp-email-sender.php';
 
