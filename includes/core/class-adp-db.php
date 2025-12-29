@@ -21,6 +21,21 @@ class ADP_DB {
     }
 
     /**
+     * Elimina un suscriptor basado en su ID.
+     *
+     * @param int $id ID del suscriptor.
+     * @return int|false Número de filas afectadas.
+     */
+    public function delete_subscriber_by_id( $id ) {
+        global $wpdb;
+        return $wpdb->delete(
+            $this->table_name,
+            array( 'id' => intval( $id ) ),
+            array( '%d' )
+        );
+    }
+
+    /**
      * Inserta suscriptor.
      * @param string $email
      * @return int|false
