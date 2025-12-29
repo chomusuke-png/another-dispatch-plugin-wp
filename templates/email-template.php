@@ -54,6 +54,13 @@
 
             <div class="footer">
                 <p>Recibiste este correo porque estás suscrito a <?php echo esc_html( $blog_name ); ?>.</p>
+                
+                <p style="margin-top: 10px; font-size: 11px; color: #aaaaaa;">
+                    ¿Recibiste el correo por error o ya no quieres recibir noticias? 
+                    <a href="<?php echo esc_url( $unsubscribe_link ); ?>" style="color: #999999; text-decoration: underline;">
+                        Haz clic aquí para desuscribirte
+                    </a>.
+                </p>
             </div>
         </div>
     </div>

@@ -32,6 +32,14 @@ function adp_activate_plugin() {
 register_activation_hook( __FILE__, 'adp_activate_plugin' );
 
 /**
+ * Función de limpieza al desactivar.
+ */
+function adp_deactivate_plugin() {
+    wp_clear_scheduled_hook( 'adp_send_notification_cron' );
+}
+register_deactivation_hook( __FILE__, 'adp_deactivate_plugin' );
+
+/**
  * Inicialización de las clases principales.
  */
 function adp_run_plugin() {

@@ -1,4 +1,5 @@
 <div class="adp-subscription-form">
+    <?php if ( ! empty( $message ) ) echo $message; // Variable inyectada desde render_shortcode ?>
     <form method="post" action="">
         <?php wp_nonce_field( 'adp_save_sub', 'adp_nonce' ); ?>
         <p>

@@ -69,4 +69,19 @@ class ADP_DB {
         global $wpdb;
         return $wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name}" );
     }
+
+    /**
+     * Elimina un suscriptor de la base de datos.
+     *
+     * @param string $email El correo a eliminar.
+     * @return int|false Número de filas afectadas o false.
+     */
+    public function delete_subscriber( $email ) {
+        global $wpdb;
+        return $wpdb->delete(
+            $this->table_name,
+            array( 'email' => $email ),
+            array( '%s' )
+        );
+    }
 }
