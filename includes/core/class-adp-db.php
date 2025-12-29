@@ -45,10 +45,22 @@ class ADP_DB {
     }
 
     /**
+     * Obtiene los suscriptores, con opción de paginación.
+     *
+     * @param int $limit  Cantidad máxima a obtener (0 para ilimitado).
+     * @param int $offset Desde dónde empezar a contar.
      * @return array
      */
-    public function get_subscribers() {
+    public function get_subscribers( $limit = 0, $offset = 0 ) {
         global $wpdb;
+        
+        if ( $limit > 0 ) {
+            return $wpdb->get_results( 
+                $wpdb->prepare( "SELECT * FROM {$this->table_name} LIMIT %d OFFSET %d", $limit, $offset ), 
+                ARRAY_A 
+            );
+        }
+
         return $wpdb->get_results( "SELECT * FROM {$this->table_name}", ARRAY_A );
     }
 

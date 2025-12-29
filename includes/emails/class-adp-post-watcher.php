@@ -12,7 +12,8 @@ class ADP_Post_Watcher {
     }
 
     /**
-     * Programa el evento único si el post se está publicando.
+     * Programa el evento inicial si el post se está publicando.
+     * Se pasa '0' como argumento de offset inicial.
      *
      * @param string $new_status
      * @param string $old_status
@@ -23,8 +24,11 @@ class ADP_Post_Watcher {
             return;
         }
 
-        if ( ! wp_next_scheduled( 'adp_send_notification_cron', array( $post->ID ) ) ) {
-            wp_schedule_single_event( time(), 'adp_send_notification_cron', array( $post->ID ) );
+        // Argumentos: PostID, Offset (0)
+        $args = array( $post->ID, 0 );
+
+        if ( ! wp_next_scheduled( 'adp_send_notification_cron', $args ) ) {
+            wp_schedule_single_event( time(), 'adp_send_notification_cron', $args );
         }
     }
 }
