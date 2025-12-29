@@ -58,5 +58,10 @@ function adp_run_plugin() {
     // 4. Inicializar sistema de Emails
     new ADP_Post_Watcher();     // El "vigilante"
     new ADP_Email_Sender( $db ); // El "trabajador"
+
+    // 5. Inicializar Widgets
+    add_action( 'widgets_init', function() {
+        register_widget( 'ADP_Widget' );
+    });
 }
 add_action( 'plugins_loaded', 'adp_run_plugin' );
