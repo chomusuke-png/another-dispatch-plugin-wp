@@ -7,11 +7,7 @@
  */
 class ADP_Email_Sender {
 
-    /**
-     * @var ADP_DB
-     */
     private $db;
-
     const BATCH_SIZE = 50;
 
     public function __construct( $db ) {
@@ -20,19 +16,26 @@ class ADP_Email_Sender {
     }
 
     public function send_batch( $post_id, $offset = 0 ) {
+        error_log( "ADP Debug: Iniciando proceso de envío (Lote offset: $offset) para Post ID: $post_id" );
+
         $subscribers = $this->db->get_subscribers( self::BATCH_SIZE, $offset );
 
-        if ( empty( $subscribers ) ) return;
+        if ( empty( $subscribers ) ) {
+            error_log( "ADP Debug: No se encontraron suscriptores (o fin de la lista). Offset: $offset" );
+            return;
+        }
 
         $post = get_post( $post_id );
-        if ( ! $post ) return;
+        if ( ! $post ) {
+            error_log( "ADP Error: No se pudo obtener el objeto Post ID: $post_id" );
+            return;
+        }
 
         $blog_name      = get_bloginfo( 'name' );
         $post_title     = $post->post_title;
         $post_link      = get_permalink( $post_id );
         $featured_image = get_the_post_thumbnail_url( $post_id, 'full' );
         
-        // Corrección de URLs relativas (Mejora profesional previa)
         $post_content   = apply_filters( 'the_content', $post->post_content );
         $base_url       = home_url();
         $post_content   = preg_replace( '/(href|src)=("|\')\//i', '$1=$2' . $base_url . '/', $post_content );
@@ -54,6 +57,7 @@ class ADP_Email_Sender {
             'From: ' . $blog_name . ' <' . $from_email . '>'
         );
 
+        $sent_count = 0;
         foreach ( $subscribers as $sub ) {
             $email = $sub['email'];
             $hash = md5( $email . wp_salt() );
@@ -64,13 +68,20 @@ class ADP_Email_Sender {
 
             $body = str_replace( '##UNSUBSCRIBE_URL##', $unsub_url, $template_html );
             
-            // Debug temporal (opcional)
-            // $res = wp_mail( $email, $subject, $body, $headers );
-            wp_mail( $email, $subject, $body, $headers );
+            $result = wp_mail( $email, $subject, $body, $headers );
+            
+            if ( $result ) {
+                $sent_count++;
+            } else {
+                error_log( "ADP Error: Falló wp_mail para $email" );
+            }
         }
+
+        error_log( "ADP Debug: Lote finalizado. Enviados: $sent_count de " . count($subscribers) );
 
         if ( count( $subscribers ) === self::BATCH_SIZE ) {
             wp_schedule_single_event( time(), 'adp_send_notification_cron', array( $post_id, $offset + self::BATCH_SIZE ) );
+            error_log( "ADP Debug: Programando siguiente lote..." );
         }
     }
 }

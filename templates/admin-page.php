@@ -1,15 +1,15 @@
 <?php
 /**
  * Template: Página de Administración de Suscriptores
- * Variables disponibles: $subscribers (array), $count (int), $message (string)
+ * Variables disponibles: $subscribers (array), $count (int), $message (string), $msg_type (string)
  */
 ?>
 <div class="wrap">
     <h1>Lista de Suscriptores</h1>
     
     <?php if ( ! empty( $message ) ) : ?>
-        <div class="notice notice-success is-dismissible">
-            <p><?php echo esc_html( $message ); ?></p>
+        <div class="notice notice-<?php echo !empty($msg_type) ? esc_attr($msg_type) : 'success'; ?> is-dismissible">
+            <p><?php echo $message; // Permitimos HTML seguro generado en la clase ?></p>
         </div>
     <?php endif; ?>
 
@@ -47,7 +47,7 @@
                     <p style="flex: 1;">
                         <label for="adp_smtp_port">Puerto:</label><br>
                         <input type="number" id="adp_smtp_port" name="adp_smtp_port" 
-                               value="<?php echo esc_attr( get_option( 'adp_smtp_port', '587' ) ); ?>" 
+                        value="<?php echo esc_attr( get_option( 'adp_smtp_port', '587' ) ); ?>" 
                                class="small-text">
                     </p>
                     <p style="flex: 1;">
@@ -59,7 +59,8 @@
                         </select>
                     </p>
                 </div>
-
+                <p>465 (recomendado con SSL) o 587 (recomendado con TLS)</p>
+                        
                 <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Credenciales</h3>
                 <p>
                     <label for="adp_smtp_user">Usuario SMTP:</label><br>
@@ -75,6 +76,16 @@
                 </p>
                 
                 <?php submit_button( 'Guardar Configuración SMTP' ); ?>
+            </form>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+            
+            <h3>Prueba de conexión</h3>
+            <p>Se enviará un correo de prueba a: <strong><?php echo esc_html( wp_get_current_user()->user_email ); ?></strong></p>
+            
+            <form method="post" action="">
+                <?php wp_nonce_field( 'adp_send_test_email', 'adp_test_email_nonce' ); ?>
+                <input type="submit" name="adp_test_email_submit" id="adp_test_email_submit" class="button button-secondary" value="Enviar Correo de Prueba">
             </form>
         </div>
     </div>
