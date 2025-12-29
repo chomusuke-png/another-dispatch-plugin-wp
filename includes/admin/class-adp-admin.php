@@ -19,6 +19,8 @@ class ADP_Admin {
         $this->db = $db;
         add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
         add_action( 'admin_init', array( $this, 'process_actions' ) );
+        // Nuevo: Registrar configuraciones
+        add_action( 'admin_init', array( $this, 'register_settings' ) );
     }
 
     /**
@@ -37,13 +39,18 @@ class ADP_Admin {
     }
 
     /**
+     * Registra las opciones del plugin en WordPress.
+     */
+    public function register_settings() {
+        register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
+    }
+
+    /**
      * Procesa acciones administrativas (como borrar).
      */
     public function process_actions() {
-        // Verificar si hay una acción de borrado solicitada
         if ( isset( $_GET['action'], $_GET['subscriber_id'], $_GET['_wpnonce'] ) && 'adp_delete_subscriber' === $_GET['action'] ) {
             
-            // 1. Verificar seguridad (Nonce y Permisos)
             if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_delete_subscriber_action' ) ) {
                 wp_die( 'Error de seguridad. Inténtalo de nuevo.' );
             }
@@ -52,11 +59,9 @@ class ADP_Admin {
                 wp_die( 'No tienes permisos para realizar esta acción.' );
             }
 
-            // 2. Ejecutar borrado
             $id = intval( $_GET['subscriber_id'] );
             $this->db->delete_subscriber_by_id( $id );
 
-            // 3. Redirigir para evitar reenvíos y mostrar mensaje
             wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'deleted' ), admin_url( 'admin.php' ) ) );
             exit;
         }
@@ -66,13 +71,16 @@ class ADP_Admin {
      * Renderiza la página de administración.
      */
     public function render_admin_page() {
-        $subscribers = $this->db->get_subscribers(); // Podrías añadir paginación aquí en el futuro
+        $subscribers = $this->db->get_subscribers();
         $count = $this->db->get_subscriber_count();
 
-        // Verificar mensajes
         $message = '';
         if ( isset( $_GET['adp_msg'] ) && 'deleted' === $_GET['adp_msg'] ) {
             $message = 'Suscriptor eliminado correctamente.';
+        }
+        // Capturar mensaje de settings guardados
+        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
+             $message = 'Configuración guardada correctamente.';
         }
 
         include ADP_PATH . 'templates/admin-page.php';
