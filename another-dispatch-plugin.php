@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 2.4
+ * Version: 2.5
  * Author: Zumito
  */
 
@@ -23,6 +23,7 @@ require_once ADP_PATH . 'includes/public/class-adp-unsubscribe.php';
 require_once ADP_PATH . 'includes/public/class-adp-widget.php';
 require_once ADP_PATH . 'includes/emails/class-adp-post-watcher.php';
 require_once ADP_PATH . 'includes/emails/class-adp-email-sender.php';
+require_once ADP_PATH . 'includes/emails/class-adp-smtp.php';
 
 /**
  * Activación y limpieza.
@@ -56,8 +57,9 @@ function adp_run_plugin() {
     new ADP_Unsubscribe_Handler( $db );
 
     // 4. Inicializar sistema de Emails
-    new ADP_Post_Watcher();     // El "vigilante"
-    new ADP_Email_Sender( $db ); // El "trabajador"
+    new ADP_Post_Watcher();
+    new ADP_Email_Sender( $db );
+    new ADP_SMTP();
 
     // 5. Inicializar Widgets
     add_action( 'widgets_init', function() {

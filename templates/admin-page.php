@@ -22,25 +22,59 @@
         </div>
 
         <div class="card" style="margin-top: 20px; flex: 2; min-width: 300px;">
-            <h2>Configuración de Envío</h2>
+            <h2>Configuración de Envío (SMTP)</h2>
             <form method="post" action="options.php">
                 <?php settings_fields( 'adp_plugin_settings' ); ?>
                 <?php do_settings_sections( 'adp_plugin_settings' ); ?>
                 
+                <h3 style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Identidad</h3>
                 <p>
-                    <label for="adp_sender_email"><strong>Email del Remitente (From):</strong></label><br>
+                    <label for="adp_sender_email">Email del Remitente:</label><br>
                     <input type="email" id="adp_sender_email" name="adp_sender_email" 
                            value="<?php echo esc_attr( get_option( 'adp_sender_email' ) ); ?>" 
-                           class="regular-text" 
-                           placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" 
-                           style="width: 100%; max-width: 400px; margin-top: 5px;">
+                           class="regular-text" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" style="width: 100%;">
                 </p>
-                <p class="description">
-                    Este es el correo que verán tus suscriptores. <br>
-                    <em>Si lo dejas vacío, se usará: <?php echo esc_html( get_option( 'admin_email' ) ); ?></em>
+
+                <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Servidor SMTP</h3>
+                <p>
+                    <label for="adp_smtp_host">Servidor (Host):</label><br>
+                    <input type="text" id="adp_smtp_host" name="adp_smtp_host" 
+                           value="<?php echo esc_attr( get_option( 'adp_smtp_host' ) ); ?>" 
+                           class="regular-text" placeholder="ej. smtp.gmail.com" style="width: 100%;">
                 </p>
                 
-                <?php submit_button( 'Guardar Configuración' ); ?>
+                <div style="display: flex; gap: 10px;">
+                    <p style="flex: 1;">
+                        <label for="adp_smtp_port">Puerto:</label><br>
+                        <input type="number" id="adp_smtp_port" name="adp_smtp_port" 
+                               value="<?php echo esc_attr( get_option( 'adp_smtp_port', '587' ) ); ?>" 
+                               class="small-text">
+                    </p>
+                    <p style="flex: 1;">
+                        <label for="adp_smtp_secure">Encriptación:</label><br>
+                        <select id="adp_smtp_secure" name="adp_smtp_secure">
+                            <option value="tls" <?php selected( get_option( 'adp_smtp_secure' ), 'tls' ); ?>>TLS (Recomendado)</option>
+                            <option value="ssl" <?php selected( get_option( 'adp_smtp_secure' ), 'ssl' ); ?>>SSL</option>
+                            <option value="" <?php selected( get_option( 'adp_smtp_secure' ), '' ); ?>>Ninguna</option>
+                        </select>
+                    </p>
+                </div>
+
+                <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Credenciales</h3>
+                <p>
+                    <label for="adp_smtp_user">Usuario SMTP:</label><br>
+                    <input type="text" id="adp_smtp_user" name="adp_smtp_user" 
+                           value="<?php echo esc_attr( get_option( 'adp_smtp_user' ) ); ?>" 
+                           class="regular-text" style="width: 100%;">
+                </p>
+                <p>
+                    <label for="adp_smtp_pass">Contraseña SMTP:</label><br>
+                    <input type="password" id="adp_smtp_pass" name="adp_smtp_pass" 
+                           value="<?php echo esc_attr( get_option( 'adp_smtp_pass' ) ); ?>" 
+                           class="regular-text" style="width: 100%;">
+                </p>
+                
+                <?php submit_button( 'Guardar Configuración SMTP' ); ?>
             </form>
         </div>
     </div>

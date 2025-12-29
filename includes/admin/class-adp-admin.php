@@ -42,7 +42,16 @@ class ADP_Admin {
      * Registra las opciones del plugin en WordPress.
      */
     public function register_settings() {
+        // Configuración de remitente
         register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
+
+        // Configuración SMTP
+        register_setting( 'adp_plugin_settings', 'adp_smtp_host', 'sanitize_text_field' );
+        register_setting( 'adp_plugin_settings', 'adp_smtp_port', 'absint' );
+        register_setting( 'adp_plugin_settings', 'adp_smtp_secure', 'sanitize_text_field' );
+        register_setting( 'adp_plugin_settings', 'adp_smtp_user', 'sanitize_text_field' );
+        // Nota: Las contraseñas deberían sanitizarse con cuidado para no romper caracteres especiales
+        register_setting( 'adp_plugin_settings', 'adp_smtp_pass', 'sanitize_text_field' );
     }
 
     /**
