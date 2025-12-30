@@ -17,18 +17,66 @@ class ADP_Admin {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
     }
 
-    public function enqueue_styles( $hook ) {
-        if ( 'toplevel_page_another-dispatch-plugin' !== $hook ) {
+    /**
+     * Carga CSS y JS necesarios (incluyendo Color Picker).
+     */
+    public function enqueue_assets( $hook ) {
+        // Solo cargar en nuestras páginas
+        if ( strpos( $hook, 'another-dispatch-plugin' ) === false && strpos( $hook, 'adp-customizer' ) === false ) {
             return;
         }
-        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '1.0.0', 'all' );
+
+        // CSS General del Admin
+        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.2.0' );
+
+        // Cargar Color Picker solo en la página del personalizador
+        if ( strpos( $hook, 'adp-customizer' ) !== false ) {
+            wp_enqueue_style( 'wp-color-picker' );
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'wp-color-picker' ), '1.0.0', true );
+        }
     }
 
+    /**
+     * Registra la estructura de menús (Dashboard + Customizer).
+     */
     public function add_admin_menu() {
-        add_menu_page( 'Dispatch', 'Dispatch', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_admin_page' ), 'dashicons-email-alt', 6 );
+        // 1. Menú Principal (Contenedor)
+        add_menu_page(
+            'Dispatch',                 // Título de la página
+            'Dispatch',                 // Título del menú
+            'manage_options',           // Capability
+            'another-dispatch-plugin',  // Slug del padre
+            array( $this, 'render_dashboard_page' ), // Callback por defecto
+            'dashicons-email-alt',
+            6
+        );
+
+        // 2. Submenú Dashboard (repite el slug padre para ser la "Home")
+        add_submenu_page(
+            'another-dispatch-plugin',
+            'Dashboard',
+            'Dashboard',
+            'manage_options',
+            'another-dispatch-plugin',
+            array( $this, 'render_dashboard_page' )
+        );
+
+        // 3. Submenú Mail Customizer (NUEVO)
+        add_submenu_page(
+            'another-dispatch-plugin',
+            'Personalizar Diseño',      // Título página
+            'Mail Customizer',          // Título menú
+            'manage_options',
+            'adp-customizer',           // Slug nuevo
+            array( $this, 'render_customizer_page' )
+        );
     }
 
+    /**
+     * Registra todas las opciones del plugin.
+     */
     public function register_settings() {
+        // --- General & SMTP ---
         register_setting( 'adp_plugin_settings', 'adp_delivery_frequency', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_host', 'sanitize_text_field' );
@@ -36,6 +84,13 @@ class ADP_Admin {
         register_setting( 'adp_plugin_settings', 'adp_smtp_secure', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_user', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_pass', 'sanitize_text_field' );
+
+        // --- Customizer Colors ---
+        register_setting( 'adp_customizer_settings', 'adp_color_header_bg', 'sanitize_hex_color' );
+        register_setting( 'adp_customizer_settings', 'adp_color_header_text', 'sanitize_hex_color' );
+        register_setting( 'adp_customizer_settings', 'adp_color_btn_bg', 'sanitize_hex_color' );
+        register_setting( 'adp_customizer_settings', 'adp_color_btn_text', 'sanitize_hex_color' );
+        register_setting( 'adp_customizer_settings', 'adp_color_links', 'sanitize_hex_color' );
     }
 
     /**
@@ -99,29 +154,39 @@ class ADP_Admin {
         }
     }
 
-    public function render_admin_page() {
+    /**
+     * Renderiza el Dashboard.
+     */
+    public function render_dashboard_page() {
         $subscribers = $this->db->get_subscribers();
         $count = $this->db->get_subscriber_count();
-
+        
         $message = '';
         $msg_type = 'success';
-
         if ( isset( $_GET['adp_msg'] ) ) {
             switch ( $_GET['adp_msg'] ) {
                 case 'deleted': $message = 'Suscriptor eliminado.'; break;
                 case 'test_success': $message = 'Correo de prueba SMTP enviado con éxito.'; break;
                 case 'test_error': $message = 'Error al enviar prueba SMTP. Revisa credenciales.'; $msg_type = 'error'; break;
-                // Nuevos mensajes
                 case 'digest_queued': $message = '<strong>¡Proceso Iniciado!</strong> El Resumen Mensual se está enviando en segundo plano.'; break;
                 case 'instant_queued': $message = '<strong>¡Proceso Iniciado!</strong> El último post se está enviando a la lista en segundo plano.'; break;
                 case 'no_posts': $message = 'No se encontraron posts publicados para probar el envío.'; $msg_type = 'warning'; break;
             }
         }
-        
         if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
              $message = 'Configuración guardada correctamente.';
         }
 
-        include ADP_PATH . 'templates/admin-page.php';
+        include ADP_PATH . 'templates/admin/dashboard.php';
+    }
+
+    /**
+     * Renderiza el Personalizador.
+     */
+    public function render_customizer_page() {
+        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
+             $message = 'Estilos actualizados correctamente.';
+        }
+        include ADP_PATH . 'templates/admin/customizer.php';
     }
 }
