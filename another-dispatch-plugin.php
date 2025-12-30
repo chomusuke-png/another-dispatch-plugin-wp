@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.2.11
+ * Version: 1.2.10
  * Author: Zumito
  */
 
@@ -14,9 +14,16 @@ define( 'ADP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ADP_URL', plugin_dir_url( __FILE__ ) );
 
 // Carga de dependencias
-require_once ADP_PATH . 'includes/core/class-autoloader.php';
-ADP_Autoloader::register();
-add_action( 'plugins_loaded', 'adp_run_plugin' );
+require_once ADP_PATH . 'includes/admin/class-admin-manager.php';
+require_once ADP_PATH . 'includes/core/class-activator.php';
+require_once ADP_PATH . 'includes/core/class-db.php';
+require_once ADP_PATH . 'includes/emails/class-email-sender.php';
+require_once ADP_PATH . 'includes/emails/class-post-watcher.php';
+require_once ADP_PATH . 'includes/emails/class-smtp-config.php';
+require_once ADP_PATH . 'includes/public/class-shortcode.php';
+require_once ADP_PATH . 'includes/public/class-subscribe.php';
+require_once ADP_PATH . 'includes/public/class-unsubscribe.php';
+require_once ADP_PATH . 'includes/public/class-widget.php';
 
 function adp_add_cron_intervals( $schedules ) {
     $schedules['monthly'] = array(

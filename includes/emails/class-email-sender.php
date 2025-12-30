@@ -40,7 +40,7 @@ class ADP_Email_Sender {
         // Cargar Template A (Individual)
         ob_start();
         $unsubscribe_link = '##UNSUBSCRIBE_URL##';
-        include ADP_PATH . 'templates/email-template.php';
+        include ADP_PATH . 'templates/emails/single.php';
         $template_html = ob_get_clean();
 
         $subject = 'Nuevo post: ' . $post_title;
@@ -86,7 +86,7 @@ class ADP_Email_Sender {
         // Cargar Template B (Digest)
         ob_start();
         $unsubscribe_link = '##UNSUBSCRIBE_URL##';
-        include ADP_PATH . 'templates/email-digest-template.php';
+        include ADP_PATH . 'templates/emails/digest.php';
         $template_html = ob_get_clean();
 
         $subject = $email_title . ' - ' . $blog_name;
