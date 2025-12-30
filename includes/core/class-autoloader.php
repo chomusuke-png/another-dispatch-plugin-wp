@@ -37,7 +37,7 @@ class ADP_Autoloader {
         // Ejemplo: ADP_Email_Sender -> includes/emails/class-adp-email-sender.php
         
         // Convertir CamelCase a kebab-case para el nombre del archivo
-        $file_name = 'class-adp-' . str_replace( '_', '-', strtolower( $relative_class ) ) . '.php';
+        $file_name = 'class-' . str_replace( '_', '-', strtolower( $relative_class ) ) . '.php';
 
         // Determinar subdirectorio basado en el nombre (Lógica simple basada en tu estructura actual)
         $directory = '';

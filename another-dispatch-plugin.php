@@ -14,7 +14,7 @@ define( 'ADP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ADP_URL', plugin_dir_url( __FILE__ ) );
 
 // Carga de dependencias
-require_once ADP_PATH . 'includes/core/class-adp-autoloader.php';
+require_once ADP_PATH . 'includes/core/class-autoloader.php';
 ADP_Autoloader::register();
 add_action( 'plugins_loaded', 'adp_run_plugin' );
 
