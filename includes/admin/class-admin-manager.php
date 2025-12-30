@@ -25,7 +25,7 @@ class ADP_Admin {
     }
 
     public function add_admin_menu() {
-        add_menu_page( 'Suscriptores ADP', 'Suscriptores ADP', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_admin_page' ), 'dashicons-email-alt', 6 );
+        add_menu_page( 'Dispatch', 'Dispatch', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_admin_page' ), 'dashicons-email-alt', 6 );
     }
 
     public function register_settings() {

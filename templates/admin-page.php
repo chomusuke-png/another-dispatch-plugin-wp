@@ -5,7 +5,7 @@
 ?>
 
 <div class="wrap">
-    <h1 class="wp-heading-inline">Suscriptores ADP</h1>
+    <h1 class="wp-heading-inline">Dispatch Dashboard</h1>
     <hr class="wp-header-end">
 
     <?php if ( ! empty( $message ) ) : ?>
