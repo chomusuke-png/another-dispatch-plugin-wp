@@ -7,19 +7,28 @@
  */
 class ADP_Admin {
 
-    /**
-     * @var ADP_DB
-     */
     private $db;
 
-    /**
-     * @param ADP_DB $db
-     */
     public function __construct( $db ) {
         $this->db = $db;
         add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
         add_action( 'admin_init', array( $this, 'process_actions' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+    }
+
+    public function enqueue_styles( $hook ) {
+        if ( 'toplevel_page_another-dispatch-plugin' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_style( 
+            'adp-admin-css', 
+            ADP_URL . 'assets/css/admin-style.css', 
+            array(), 
+            '1.0.0', 
+            'all' 
+        );
     }
 
     /**
