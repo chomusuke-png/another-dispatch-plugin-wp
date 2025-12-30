@@ -3,12 +3,27 @@
 /**
  * Class ADP_Shortcode
  *
- * Se encarga únicamente de renderizar el formulario.
+ * Se encarga de renderizar el formulario y cargar sus estilos.
  */
 class ADP_Shortcode {
 
     public function __construct() {
         add_shortcode( 'adp_subscribe', array( $this, 'render' ) );
+        // Hook para cargar CSS del frontend
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+    }
+
+    /**
+     * Carga la hoja de estilos pública.
+     */
+    public function enqueue_styles() {
+        wp_enqueue_style( 
+            'adp-public-css', 
+            ADP_URL . 'assets/css/public-style.css', 
+            array(), 
+            '1.0.0', 
+            'all' 
+        );
     }
 
     /**
@@ -21,10 +36,11 @@ class ADP_Shortcode {
         $message = '';
         if ( isset( $_GET['adp_status'] ) ) {
             $status = sanitize_text_field( $_GET['adp_status'] );
+            
             if ( 'success' === $status ) {
-                $message = '<div class="adp-msg success" style="color: green;">¡Gracias por suscribirte!</div>';
+                $message = '<div class="adp-alert success">¡Gracias! Te has suscrito correctamente.</div>';
             } elseif ( 'exists' === $status ) {
-                $message = '<div class="adp-msg error" style="color: orange;">Este correo ya está registrado.</div>';
+                $message = '<div class="adp-alert error">Este correo ya está registrado en nuestra lista.</div>';
             }
         }
 

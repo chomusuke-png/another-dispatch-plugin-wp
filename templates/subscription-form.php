@@ -1,12 +1,20 @@
-<div class="adp-subscription-form">
-    <?php if ( ! empty( $message ) ) echo $message; // Variable inyectada desde render_shortcode ?>
+<div class="adp-form-wrapper">
+    
+    <?php if ( ! empty( $message ) ) : ?>
+        <?php echo $message; ?>
+    <?php endif; ?>
+
     <form method="post" action="">
         <?php wp_nonce_field( 'adp_save_sub', 'adp_nonce' ); ?>
-        <p>
-            <input type="email" name="adp_email" placeholder="Tu correo electrónico" required style="width: 100%; margin-bottom: 10px;">
-        </p>
-        <p>
-            <input type="submit" name="adp_subscribe_submit" value="Suscribirse">
-        </p>
+        
+        <div class="adp-input-group">
+            <input type="email" name="adp_email" class="adp-input-email" placeholder="Ingresa tu correo electrónico" required>
+        </div>
+        
+        <div class="adp-input-group">
+            <input type="submit" name="adp_subscribe_submit" class="adp-submit-btn" value="Suscribirme Ahora">
+        </div>
+
+        <small class="adp-footer-text">No enviamos spam. Date de baja cuando quieras.</small>
     </form>
 </div>
