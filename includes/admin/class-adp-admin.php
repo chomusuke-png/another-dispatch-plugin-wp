@@ -21,34 +21,13 @@ class ADP_Admin {
         if ( 'toplevel_page_another-dispatch-plugin' !== $hook ) {
             return;
         }
-
-        wp_enqueue_style( 
-            'adp-admin-css', 
-            ADP_URL . 'assets/css/admin-style.css', 
-            array(), 
-            '1.0.0', 
-            'all' 
-        );
+        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '1.0.0', 'all' );
     }
 
-    /**
-     * Registra el menú.
-     */
     public function add_admin_menu() {
-        add_menu_page(
-            'Suscriptores ADP',
-            'Suscriptores ADP',
-            'manage_options',
-            'another-dispatch-plugin',
-            array( $this, 'render_admin_page' ),
-            'dashicons-email-alt',
-            6
-        );
+        add_menu_page( 'Suscriptores ADP', 'Suscriptores ADP', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_admin_page' ), 'dashicons-email-alt', 6 );
     }
 
-    /**
-     * Registra las opciones del plugin en WordPress.
-     */
     public function register_settings() {
         register_setting( 'adp_plugin_settings', 'adp_delivery_frequency', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
@@ -60,83 +39,82 @@ class ADP_Admin {
     }
 
     /**
-     * Procesa acciones administrativas (borrar y enviar test).
+     * Procesa todas las acciones del admin (Borrar, Test SMTP, Test Contenido).
      */
     public function process_actions() {
-        // 1. Lógica de borrado (existente)
+        // 1. Borrar Suscriptor
         if ( isset( $_GET['action'], $_GET['subscriber_id'], $_GET['_wpnonce'] ) && 'adp_delete_subscriber' === $_GET['action'] ) {
-            if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_delete_subscriber_action' ) ) wp_die( 'Error de seguridad.' );
-            if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Permisos insuficientes.' );
+            if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_delete_subscriber_action' ) ) wp_die( 'Seguridad fallida.' );
+            if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Sin permisos.' );
 
-            $id = intval( $_GET['subscriber_id'] );
-            $this->db->delete_subscriber_by_id( $id );
-
+            $this->db->delete_subscriber_by_id( intval( $_GET['subscriber_id'] ) );
             wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'deleted' ), admin_url( 'admin.php' ) ) );
             exit;
         }
 
-        // 2. Lógica de Email de Prueba (NUEVO)
+        // 2. Test SMTP (Conexión)
         if ( isset( $_POST['adp_test_email_submit'] ) ) {
-            if ( ! isset( $_POST['adp_test_email_nonce'] ) || ! wp_verify_nonce( $_POST['adp_test_email_nonce'], 'adp_send_test_email' ) ) {
-                wp_die( 'Error de seguridad.' );
-            }
-            
-            if ( ! current_user_can( 'manage_options' ) ) {
-                wp_die( 'Permisos insuficientes.' );
-            }
+            check_admin_referer( 'adp_send_test_email', 'adp_test_email_nonce' ); // Manera corta de verificar nonce y permisos
 
-            // Configurar el envío
             $to = wp_get_current_user()->user_email;
-            $subject = 'Prueba de configuración ADP: ' . date('Y-m-d H:i:s');
-            $message = '<h1>¡Funciona!</h1><p>Si estás leyendo esto, tu configuración SMTP en Another Dispatch Plugin es correcta.</p>';
+            $subject = 'Prueba SMTP ADP: ' . date('H:i:s');
+            $message = '<h1>Conexión Exitosa</h1><p>Tu configuración SMTP funciona correctamente.</p>';
             
-            // Usar headers idénticos a los del envío real para validar "From"
-            $from_email = get_option( 'adp_sender_email' );
-            if ( empty( $from_email ) || ! is_email( $from_email ) ) {
-                $from_email = get_option( 'admin_email' );
-            }
-            $blog_name = get_bloginfo( 'name' );
-            
-            $headers = array( 
-                'Content-Type: text/html; charset=UTF-8',
-                'From: ' . $blog_name . ' <' . $from_email . '>'
-            );
+            $from = get_option( 'adp_sender_email' ) ?: get_option( 'admin_email' );
+            $headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . get_bloginfo('name') . ' <' . $from . '>' );
 
-            // Intentar enviar
             $sent = wp_mail( $to, $subject, $message, $headers );
+            
+            $redirect_status = $sent ? 'test_success' : 'test_error';
+            wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => $redirect_status ), admin_url( 'admin.php' ) ) );
+            exit;
+        }
 
-            if ( $sent ) {
-                wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'test_success' ), admin_url( 'admin.php' ) ) );
+        // 3. Test de Contenido (NUEVO: Disparar envío real)
+        if ( isset( $_POST['adp_test_content_submit'] ) ) {
+            check_admin_referer( 'adp_test_content_action', 'adp_test_content_nonce' );
+
+            $freq = get_option( 'adp_delivery_frequency', 'instant' );
+
+            if ( 'monthly' === $freq ) {
+                // Opción A: Es mensual -> Disparamos el evento Digest (offset 0)
+                wp_schedule_single_event( time(), 'adp_monthly_digest_event', array( 0 ) );
+                $msg_code = 'digest_queued';
             } else {
-                wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'test_error' ), admin_url( 'admin.php' ) ) );
+                // Opción B: Es inmediato -> Buscamos el último post publicado
+                $latest_posts = get_posts( array( 'numberposts' => 1, 'post_status' => 'publish', 'post_type' => 'post' ) );
+                
+                if ( ! empty( $latest_posts ) ) {
+                    $post_id = $latest_posts[0]->ID;
+                    // Disparamos el evento Inmediato para ese post
+                    wp_schedule_single_event( time(), 'adp_send_notification_cron', array( $post_id, 0 ) );
+                    $msg_code = 'instant_queued';
+                } else {
+                    $msg_code = 'no_posts';
+                }
             }
+
+            wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => $msg_code ), admin_url( 'admin.php' ) ) );
             exit;
         }
     }
 
-    /**
-     * Renderiza la página de administración.
-     */
     public function render_admin_page() {
         $subscribers = $this->db->get_subscribers();
         $count = $this->db->get_subscriber_count();
 
-        // Gestionar mensajes de feedback
         $message = '';
-        $msg_type = 'success'; // por defecto verde
+        $msg_type = 'success';
 
         if ( isset( $_GET['adp_msg'] ) ) {
             switch ( $_GET['adp_msg'] ) {
-                case 'deleted':
-                    $message = 'Suscriptor eliminado correctamente.';
-                    break;
-                case 'test_success':
-                    $message = '<strong>¡Éxito!</strong> El correo de prueba se ha enviado correctamente a ' . esc_html( wp_get_current_user()->user_email );
-                    break;
-                case 'test_error':
-                    $message = '<strong>Error:</strong> No se pudo enviar el correo. Revisa tus credenciales SMTP.';
-                    $msg_type = 'error'; // rojo
-                    break;
+                case 'deleted': $message = 'Suscriptor eliminado.'; break;
+                case 'test_success': $message = 'Correo de prueba SMTP enviado con éxito.'; break;
+                case 'test_error': $message = 'Error al enviar prueba SMTP. Revisa credenciales.'; $msg_type = 'error'; break;
+                // Nuevos mensajes
+                case 'digest_queued': $message = '<strong>¡Proceso Iniciado!</strong> El Resumen Mensual se está enviando en segundo plano.'; break;
+                case 'instant_queued': $message = '<strong>¡Proceso Iniciado!</strong> El último post se está enviando a la lista en segundo plano.'; break;
+                case 'no_posts': $message = 'No se encontraron posts publicados para probar el envío.'; $msg_type = 'warning'; break;
             }
         }
         

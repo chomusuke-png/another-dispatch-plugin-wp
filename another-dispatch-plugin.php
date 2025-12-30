@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.2.7
+ * Version: 1.2.9
  * Author: Zumito
  */
 
