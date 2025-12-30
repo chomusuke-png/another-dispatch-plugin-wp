@@ -145,6 +145,22 @@
                             <input type="password" id="adp_smtp_pass" name="adp_smtp_pass"
                                 value="<?php echo esc_attr(get_option('adp_smtp_pass')); ?>" class="widefat">
                         </p>
+                        <h3 class="hndle" style="font-size: 14px; padding: 0; margin-bottom: 10px; border-bottom: 1px solid #f0f0f1;">Modo de Envío</h3>
+                        <p>
+                            <label><strong>¿Cuándo enviar los correos?</strong></label>
+                            <?php $freq = get_option( 'adp_delivery_frequency', 'instant' ); ?>
+                            
+                            <label style="font-weight: normal; margin-bottom: 5px;">
+                                <input type="radio" name="adp_delivery_frequency" value="instant" <?php checked( $freq, 'instant' ); ?>> 
+                                <strong>Inmediato:</strong> Enviar un correo cada vez que publico un post.
+                            </label>
+                            
+                            <label style="font-weight: normal;">
+                                <input type="radio" name="adp_delivery_frequency" value="monthly" <?php checked( $freq, 'monthly' ); ?>> 
+                                <strong>Resumen Mensual:</strong> Enviar un solo correo el día 1 de cada mes con los posts del mes anterior.
+                            </label>
+                        </p>
+                        <br>
 
                         <div style="margin-top: 20px;">
                             <?php submit_button('Guardar Cambios', 'primary', 'submit', false, array('style' => 'width:100%')); ?>

@@ -50,6 +50,7 @@ class ADP_Admin {
      * Registra las opciones del plugin en WordPress.
      */
     public function register_settings() {
+        register_setting( 'adp_plugin_settings', 'adp_delivery_frequency', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_host', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_port', 'absint' );

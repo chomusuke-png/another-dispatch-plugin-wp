@@ -22,6 +22,14 @@ class ADP_Post_Watcher {
             return;
         }
 
+        // Verificar la configuración de frecuencia
+        $frequency = get_option( 'adp_delivery_frequency', 'instant' );
+        
+        if ( 'monthly' === $frequency ) {
+            error_log( "ADP Debug: Post {$post->ID} publicado, pero el modo es 'Mensual'. Se omitió el envío inmediato." );
+            return;
+        }
+
         // Argumentos: PostID, Offset (0)
         $args = array( $post->ID, 0 );
 

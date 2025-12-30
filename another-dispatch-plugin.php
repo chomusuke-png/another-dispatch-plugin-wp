@@ -25,16 +25,29 @@ require_once ADP_PATH . 'includes/emails/class-adp-post-watcher.php';
 require_once ADP_PATH . 'includes/emails/class-adp-email-sender.php';
 require_once ADP_PATH . 'includes/emails/class-adp-smtp.php';
 
+function adp_add_cron_intervals( $schedules ) {
+    $schedules['monthly'] = array(
+        'interval' => 2635200, // 30.5 días en segundos aprox
+        'display'  => __( 'Una vez al mes' )
+    );
+    return $schedules;
+}
+add_filter( 'cron_schedules', 'adp_add_cron_intervals' );
+
 /**
  * Activación y limpieza.
  */
 function adp_activate_plugin() {
     ADP_Activator::activate();
+    if ( ! wp_next_scheduled( 'adp_monthly_digest_event' ) ) {
+        wp_schedule_event( time(), 'monthly', 'adp_monthly_digest_event' );
+    }
 }
 register_activation_hook( __FILE__, 'adp_activate_plugin' );
 
 function adp_deactivate_plugin() {
     wp_clear_scheduled_hook( 'adp_send_notification_cron' );
+    wp_clear_scheduled_hook( 'adp_monthly_digest_event' );
 }
 register_deactivation_hook( __FILE__, 'adp_deactivate_plugin' );
 
