@@ -1,11 +1,7 @@
 <?php
 /**
- * Template: Plantilla HTML para el Resumen Mensual (Digest).
- * * Variables disponibles: 
- * - $blog_name (string)
- * - $email_title (string)
- * - $posts_list (array de WP_Post)
- * - $unsubscribe_link (string)
+ * Template: Plantilla para envío MENSUAL (Digest).
+ * Variables: $blog_name, $email_title, $posts_list (array), $unsubscribe_link
  */
 ?>
 <!DOCTYPE html>
@@ -21,18 +17,14 @@
         
         <div class="container">
             <div class="header">
-                <h1>
-                    <a href="<?php echo esc_url( home_url() ); ?>">
-                        <?php echo esc_html( $blog_name ); ?>
-                    </a>
-                </h1>
+                <h1><a href="<?php echo esc_url( home_url() ); ?>"><?php echo esc_html( $blog_name ); ?></a></h1>
             </div>
 
-            <div class="digest-title">
+            <div class="email-meta">
                 <?php echo esc_html( $email_title ); ?>
             </div>
 
-            <div class="post-list">
+            <div class="content-body">
                 <?php if ( ! empty( $posts_list ) ) : ?>
                     <?php foreach ( $posts_list as $post ) : ?>
                         <?php 
@@ -42,7 +34,7 @@
                         <div class="post-item">
                             <?php if ( $thumb ) : ?>
                                 <a href="<?php echo esc_url( $link ); ?>">
-                                    <img src="<?php echo esc_url( $thumb ); ?>" alt="" class="post-img">
+                                    <img src="<?php echo esc_url( $thumb ); ?>" class="post-thumb" alt="">
                                 </a>
                             <?php endif; ?>
                             
@@ -54,7 +46,7 @@
                                 <?php echo get_the_excerpt( $post ); ?>
                             </div>
                             
-                            <a href="<?php echo esc_url( $link ); ?>" class="read-more">Leer artículo completo &rarr;</a>
+                            <a href="<?php echo esc_url( $link ); ?>" class="btn-link">Leer artículo completo &rarr;</a>
                         </div>
                     <?php endforeach; ?>
                 <?php else : ?>
@@ -64,10 +56,8 @@
         </div>
 
         <div class="footer">
-            <p>Recibiste este resumen porque estás suscrito a las novedades de <?php echo esc_html( $blog_name ); ?>.</p>
-            <p>
-                <a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja</a>
-            </p>
+            <p>Este es tu resumen mensual de <strong><?php echo esc_html( $blog_name ); ?></strong>.</p>
+            <p><a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja</a></p>
         </div>
     </div>
 </body>

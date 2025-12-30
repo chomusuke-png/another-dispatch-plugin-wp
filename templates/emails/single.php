@@ -1,7 +1,7 @@
 <?php
 /**
- * Template: Plantilla HTML para el correo de notificación.
- * Variables disponibles: $blog_name, $post_title, $post_content, $post_link, $featured_image
+ * Template: Plantilla para envío INMEDIATO (Single Post).
+ * Variables: $blog_name, $post_title, $post_content, $post_link, $featured_image, $unsubscribe_link
  */
 ?>
 <!DOCTYPE html>
@@ -12,45 +12,42 @@
     <?php include ADP_PATH . 'templates/emails/email-styles.php'; ?>
 </head>
 <body>
-    <div style="background-color: #f6f6f6; padding: 40px 0;">
+    <div class="wrapper">
+        <div style="height: 40px;"></div>
+        
         <div class="container">
-            
             <div class="header">
-                <h1>
-                    <a href="<?php echo esc_url( home_url() ); ?>" style="text-decoration: none; color: #333333;">
-                        <?php echo esc_html( $blog_name ); ?>
-                    </a>
-                </h1>
+                <h1><a href="<?php echo esc_url( home_url() ); ?>"><?php echo esc_html( $blog_name ); ?></a></h1>
             </div>
 
-            <div class="content">
+            <div class="email-meta">
+                Nueva publicación
+            </div>
+
+            <div class="content-body">
                 <?php if ( ! empty( $featured_image ) ) : ?>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="<?php echo esc_url( $featured_image ); ?>" alt="<?php echo esc_attr( $post_title ); ?>">
-                    </div>
+                    <a href="<?php echo esc_url( $post_link ); ?>">
+                        <img src="<?php echo esc_url( $featured_image ); ?>" alt="<?php echo esc_attr( $post_title ); ?>" class="post-thumb">
+                    </a>
                 <?php endif; ?>
 
-                <h2 style="margin-top: 0;"><?php echo esc_html( $post_title ); ?></h2>
+                <h2 class="post-title">
+                    <a href="<?php echo esc_url( $post_link ); ?>"><?php echo esc_html( $post_title ); ?></a>
+                </h2>
 
-                <div>
+                <div class="post-content">
                     <?php echo $post_content; ?>
                 </div>
 
-                <div style="text-align: center;">
-                    <a href="<?php echo esc_url( $post_link ); ?>" class="button">Ir a ver</a>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="<?php echo esc_url( $post_link ); ?>" class="btn-primary">Leer en la web</a>
                 </div>
             </div>
+        </div>
 
-            <div class="footer">
-                <p>Recibiste este correo porque estás suscrito a <?php echo esc_html( $blog_name ); ?>.</p>
-                
-                <p style="margin-top: 10px; font-size: 11px; color: #aaaaaa;">
-                    ¿Recibiste el correo por error o ya no quieres recibir noticias? 
-                    <a href="<?php echo esc_url( $unsubscribe_link ); ?>" style="color: #999999; text-decoration: underline;">
-                        Haz clic aquí para desuscribirte
-                    </a>.
-                </p>
-            </div>
+        <div class="footer">
+            <p>Estás recibiendo este correo porque te suscribiste a <strong><?php echo esc_html( $blog_name ); ?></strong>.</p>
+            <p><a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja de la lista</a></p>
         </div>
     </div>
 </body>
