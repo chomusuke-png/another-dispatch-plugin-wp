@@ -100,8 +100,6 @@ class ADP_DB {
         $safe_status = ( 'pending' === $status ) ? 'pending' : 'active';
         return $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = %s", $safe_status ) );
     }
-
-    // ... (Mantén los métodos exists, get_subscriber, update_subscriber_hash, delete_subscriber, delete_subscriber_by_id sin cambios)
     
     public function exists( $email ) {
         global $wpdb;
@@ -132,5 +130,45 @@ class ADP_DB {
     public function delete_subscriber( $email ) {
         global $wpdb;
         return $wpdb->delete( $this->table_name, array( 'email' => $email ), array( '%s' ) );
+    }
+
+    /**
+     * Importación masiva de suscriptores.
+     */
+    public function bulk_insert( $emails ) {
+        global $wpdb;
+        
+        if ( empty( $emails ) ) return 0;
+
+        // Preparamos los valores para SQL: (email, status, created_at)
+        $values = array();
+        $now = current_time( 'mysql' );
+        
+        foreach ( $emails as $email ) {
+            $safe_email = sanitize_email( $email );
+            if ( is_email( $safe_email ) ) {
+                // Escapamos manualmente para la query raw
+                $safe_email = esc_sql( $safe_email ); 
+                // Insertamos como 'active' directamente (asumimos consentimiento previo al importar)
+                $values[] = "('$safe_email', 'active', '$now')"; 
+            }
+        }
+
+        if ( empty( $values ) ) return 0;
+
+        // Construimos la query masiva
+        $values_str = implode( ', ', $values );
+        $sql = "INSERT IGNORE INTO {$this->table_name} (email, status, created_at) VALUES $values_str";
+
+        $result = $wpdb->query( $sql );
+        return (int) $result;
+    }
+    
+    /**
+     * Obtener todos los emails para exportar (sin paginación).
+     */
+    public function get_all_subscribers_for_export() {
+        global $wpdb;
+        return $wpdb->get_results( "SELECT email, status, created_at FROM {$this->table_name}", ARRAY_A );
     }
 }

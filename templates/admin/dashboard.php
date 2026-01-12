@@ -105,6 +105,32 @@
                 </div>
             </div>
 
+            <div class="postbox">
+                <div class="postbox-header"><h2 class="hndle">Gestión de Datos (CSV)</h2></div>
+                <div class="inside">
+                    
+                    <p><strong>Exportar Lista:</strong></p>
+                    <form method="post" action="">
+                        <?php wp_nonce_field( 'adp_export_csv', 'adp_export_nonce' ); ?>
+                        <input type="submit" name="adp_action_export_csv" class="button" value="Descargar CSV">
+                        <p class="description" style="margin-top:5px;">Descarga todos los suscriptores.</p>
+                    </form>
+
+                    <hr style="margin: 15px 0;">
+
+                    <p><strong>Importar Suscriptores:</strong></p>
+                    <form method="post" action="" enctype="multipart/form-data">
+                        <?php wp_nonce_field( 'adp_import_csv', 'adp_import_nonce' ); ?>
+                        <input type="file" name="adp_import_file" accept=".csv" required style="margin-bottom: 10px; width: 100%;">
+                        <p class="description" style="margin-bottom: 10px;">
+                            Sube un archivo CSV con una columna de emails. Los nuevos se añadirán como <strong>Activos</strong>. Los duplicados se ignorarán.
+                        </p>
+                        <input type="submit" name="adp_action_import_csv" class="button button-primary" value="Subir e Importar">
+                    </form>
+
+                </div>
+            </div>
+
             <div class="postbox" style="border-color: #ffb900;">
                 <div class="postbox-header" style="background: #fff8e5; border-bottom-color: #f0c33c;">
                     <h2 class="hndle" style="color: #996800;">⚡ Operaciones Manuales</h2>

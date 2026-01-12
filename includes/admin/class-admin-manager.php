@@ -56,7 +56,68 @@ class ADP_Admin {
     }
 
     public function process_actions() {
-        // ACCIÓN 1: Borrar suscriptor
+        // ACCIÓN 1: EXPORTAR CSV
+        if ( isset( $_POST['adp_action_export_csv'] ) ) {
+            check_admin_referer( 'adp_export_csv', 'adp_export_nonce' );
+            
+            $filename = 'adp-subscribers-' . date( 'Y-m-d' ) . '.csv';
+            $data = $this->db->get_all_subscribers_for_export();
+
+            // Limpiamos buffer para que no salga HTML en el CSV
+            if ( ob_get_length() ) ob_end_clean();
+
+            header( 'Content-Type: text/csv; charset=utf-8' );
+            header( 'Content-Disposition: attachment; filename=' . $filename );
+            
+            $output = fopen( 'php://output', 'w' );
+            
+            // Encabezados del CSV
+            fputcsv( $output, array( 'Email', 'Estado', 'Fecha Suscripción' ) );
+            
+            foreach ( $data as $row ) {
+                fputcsv( $output, $row );
+            }
+            
+            fclose( $output );
+            exit; // Detenemos ejecución de WP
+        }
+
+        // ACCIÓN 2: IMPORTAR CSV
+        if ( isset( $_POST['adp_action_import_csv'] ) ) {
+            check_admin_referer( 'adp_import_csv', 'adp_import_nonce' );
+
+            if ( ! empty( $_FILES['adp_import_file']['tmp_name'] ) ) {
+                $file = $_FILES['adp_import_file']['tmp_name'];
+                $handle = fopen( $file, 'r' );
+                
+                if ( $handle !== false ) {
+                    $emails_to_import = array();
+                    
+                    // Leemos línea por línea
+                    while ( ( $data = fgetcsv( $handle, 1000, ',' ) ) !== false ) {
+                        // Asumimos que el email está en la columna 0
+                        // Validación básica para saltar encabezados si dicen "Email"
+                        if ( isset( $data[0] ) && is_email( $data[0] ) ) {
+                            $emails_to_import[] = $data[0];
+                        }
+                    }
+                    fclose( $handle );
+
+                    // Insertamos en lotes de 100 para no saturar memoria
+                    $chunks = array_chunk( $emails_to_import, 100 );
+                    $total_inserted = 0;
+                    
+                    foreach ( $chunks as $chunk ) {
+                        $total_inserted += $this->db->bulk_insert( $chunk );
+                    }
+
+                    wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'imported', 'count' => $total_inserted ), admin_url( 'admin.php' ) ) );
+                    exit;
+                }
+            }
+        }
+
+        // ACCIÓN 3: Borrar suscriptor
         if ( isset( $_GET['action'], $_GET['subscriber_id'], $_GET['_wpnonce'] ) && 'adp_delete_subscriber' === $_GET['action'] ) {
             if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_delete_subscriber_action' ) ) wp_die( 'Error de seguridad.' );
             $this->db->delete_subscriber_by_id( intval( $_GET['subscriber_id'] ) );
@@ -64,7 +125,7 @@ class ADP_Admin {
             exit;
         }
 
-        // ACCIÓN 2: Reenviar Verificación
+        // ACCIÓN 4: Reenviar Verificación
         if ( isset( $_GET['action'], $_GET['email'], $_GET['_wpnonce'] ) && 'adp_resend_verification' === $_GET['action'] ) {
             if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_resend_action' ) ) wp_die( 'Error de seguridad.' );
             $email = sanitize_email( $_GET['email'] );
@@ -82,7 +143,7 @@ class ADP_Admin {
             }
         }
 
-        // ACCIÓN 3: Tests
+        // ACCIÓN 5: Tests
         if ( isset( $_POST['adp_test_email_submit'] ) ) {
             check_admin_referer( 'adp_send_test_email', 'adp_test_email_nonce' );
             $to = wp_get_current_user()->user_email;
@@ -135,6 +196,10 @@ class ADP_Admin {
                 case 'digest_queued': $message = 'Resumen mensual en cola.'; break;
                 case 'instant_queued': $message = 'Envío inmediato en cola.'; break;
                 case 'no_posts': $message = 'No hay posts.'; $msg_type = 'warning'; break;
+                case 'imported': 
+                    $count = isset( $_GET['count'] ) ? intval( $_GET['count'] ) : 0;
+                    $message = "Importación completada. Se añadieron $count suscriptores nuevos."; 
+                    break;
             }
         }
         
