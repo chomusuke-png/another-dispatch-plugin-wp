@@ -40,7 +40,7 @@
                                     <th>Email</th>
                                     <th style="width: 100px;">Estado</th>
                                     <th>Fecha</th>
-                                    <th style="width: 80px; text-align: center;">Acciones</th>
+                                    <th style="width: 120px; text-align: center;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,11 +58,29 @@
                                             <?php endif; ?>
                                         </td>
                                         <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $sub['created_at'] ) ) ); ?></td>
+                                        
                                         <td style="text-align: center;">
                                             <?php 
+                                            // URL para borrar
                                             $del_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_delete_subscriber&subscriber_id=' . $sub['id'] ), 'adp_delete_subscriber_action' ); 
                                             ?>
-                                            <a href="<?php echo esc_url( $del_url ); ?>" class="button button-small button-link-delete" onclick="return confirm('¿Borrar suscriptor?');"><span class="dashicons dashicons-trash"></span></a>
+
+                                            <?php if ( 'pending' === $sub['status'] ) : ?>
+                                                <?php 
+                                                $resend_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_resend_verification&email=' . urlencode($sub['email']) ), 'adp_resend_action' ); 
+                                                ?>
+                                                <a href="<?php echo esc_url( $resend_url ); ?>" class="button button-small" title="Reenviar correo de verificación" style="margin-right: 5px;">
+                                                    <span class="dashicons dashicons-email-alt" style="line-height: 26px; font-size: 16px; color: #2271b1;"></span>
+                                                </a>
+                                            <?php else : ?>
+                                                <button class="button button-small" disabled title="Usuario ya verificado" style="margin-right: 5px; opacity: 0.5;">
+                                                    <span class="dashicons dashicons-yes" style="line-height: 26px; font-size: 16px; color: green;"></span>
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <a href="<?php echo esc_url( $del_url ); ?>" class="button button-small button-link-delete" onclick="return confirm('¿Borrar suscriptor?');" title="Eliminar suscriptor">
+                                                <span class="dashicons dashicons-trash" style="line-height: 26px; font-size: 16px;"></span>
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -76,8 +94,7 @@
         </div>
 
         <div class="adp-sidebar-column">
-
-            <div class="adp-stat-card">
+             <div class="adp-stat-card">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                     <div>
                         <div class="adp-stat-number" style="font-size: 32px;"><?php echo esc_html( $count_total ); ?></div>
