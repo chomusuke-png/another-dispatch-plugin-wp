@@ -53,7 +53,6 @@ class ADP_Email_Sender {
         }
 
         // 4. ¿Quedan más suscriptores? Programar siguiente lote con RETRASO
-        // Si obtuvimos menos suscriptores que el límite, significa que ya acabamos.
         if ( count( $subscribers ) === self::BATCH_SIZE ) {
             $new_offset = $offset + self::BATCH_SIZE;
             
@@ -70,6 +69,53 @@ class ADP_Email_Sender {
     }
 
     /**
+     * --- FUNCIÓN RECUPERADA (Era necesaria para el Digest Mensual) ---
+     */
+    public function send_digest_batch( $offset = 0 ) {
+        if ( 'monthly' !== get_option( 'adp_delivery_frequency' ) ) return;
+
+        // Calcular mes pasado
+        $first_day = date( 'Y-m-01', strtotime( 'last month' ) );
+        $last_day  = date( 'Y-m-t', strtotime( 'last month' ) );
+
+        $posts = get_posts( array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'date_query'     => array(
+                array( 'after' => $first_day, 'before' => $last_day, 'inclusive' => true ),
+            ),
+        ) );
+
+        if ( empty( $posts ) ) return;
+
+        // Nota: Aquí usamos la lógica simple vieja para el digest, 
+        // idealmente en el futuro también podrías migrar esto a Action Scheduler.
+        $subscribers = $this->db->get_subscribers( self::BATCH_SIZE, $offset, 'active' );
+        if ( empty( $subscribers ) ) return;
+
+        $blog_name   = get_bloginfo( 'name' );
+        $email_title = 'Resumen de ' . date_i18n( 'F Y', strtotime( 'last month' ) );
+        $posts_list  = $posts; 
+
+        ob_start();
+        $unsubscribe_link = '##UNSUBSCRIBE_URL##';
+        include ADP_PATH . 'templates/emails/digest.php';
+        $template_html = ob_get_clean();
+
+        $subject = $email_title . ' - ' . $blog_name;
+        $headers = $this->get_headers();
+
+        foreach ( $subscribers as $sub ) {
+            $this->send_individual_email( $sub['email'], $subject, $template_html, $headers );
+        }
+
+        if ( count( $subscribers ) === self::BATCH_SIZE ) {
+            wp_schedule_single_event( time() + 60, 'adp_monthly_digest_event', array( $offset + self::BATCH_SIZE ) );
+        }
+    }
+
+    /**
      * Genera el HTML para un post individual.
      */
     private function prepare_single_email_html( $post ) {
@@ -78,12 +124,11 @@ class ADP_Email_Sender {
         $post_link      = get_permalink( $post->ID );
         $featured_image = get_the_post_thumbnail_url( $post->ID, 'full' );
         
-        // Procesar contenido (rutas absolutas para imágenes)
         $post_content   = apply_filters( 'the_content', $post->post_content );
         $base_url       = home_url();
         $post_content   = preg_replace( '/(href|src)=("|\')\//i', '$1=$2' . $base_url . '/', $post_content );
         
-        $unsubscribe_link = '##UNSUBSCRIBE_URL##'; // Placeholder
+        $unsubscribe_link = '##UNSUBSCRIBE_URL##'; 
 
         ob_start();
         include ADP_PATH . 'templates/emails/single.php';
@@ -111,22 +156,5 @@ class ADP_Email_Sender {
             'Content-Type: text/html; charset=UTF-8',
             'From: ' . $blog_name . ' <' . $from_email . '>'
         );
-    }
-
-    /**
-     * Helper para procesar el loop de envío y reemplazar placeholders
-     */
-    private function process_queue( $subscribers, $subject, $template_html, $headers ) {
-        foreach ( $subscribers as $sub ) {
-            $email = $sub['email'];
-            $hash  = md5( $email . wp_salt() );
-            $unsub_url = add_query_arg(
-                array( 'adp_action' => 'unsubscribe', 'email' => urlencode( $email ), 'hash' => $hash ),
-                home_url( '/' )
-            );
-
-            $body = str_replace( '##UNSUBSCRIBE_URL##', $unsub_url, $template_html );
-            wp_mail( $email, $subject, $body, $headers );
-        }
     }
 }
