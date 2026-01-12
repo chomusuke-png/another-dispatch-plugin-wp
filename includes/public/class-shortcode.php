@@ -40,7 +40,9 @@ class ADP_Shortcode {
             if ( 'success' === $status ) {
                 $message = '<div class="adp-alert success">¡Gracias! Te has suscrito correctamente.</div>';
             } elseif ( 'exists' === $status ) {
-                $message = '<div class="adp-alert error">Este correo ya está registrado en nuestra lista.</div>';
+                $message = '<div class="adp-alert error">Este correo ya está registrado.</div>';
+            } elseif ( 'pending' === $status ) { 
+                $message = '<div class="adp-alert success">¡Casi listo! Revisa tu bandeja de entrada para confirmar tu suscripción.</div>';
             }
         }
 
