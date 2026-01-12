@@ -1,0 +1,107 @@
+<?php
+/**
+ * Template: Página de Configuración (Ajustes)
+ */
+?>
+
+<div class="wrap">
+    <h1>Ajustes de Dispatch</h1>
+    <hr class="wp-header-end">
+
+    <?php if ( ! empty( $message ) ) : ?>
+        <div class="notice notice-success is-dismissible">
+            <p><?php echo esc_html( $message ); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <form method="post" action="options.php">
+        <?php settings_fields( 'adp_plugin_settings' ); ?>
+        
+        <div class="adp-dashboard-wrapper" style="display: flex; gap: 20px; align-items: flex-start; margin-top: 20px;">
+            
+            <div class="adp-main-column" style="flex: 2; min-width: 400px;">
+                
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Configuración SMTP</h2></div>
+                    <div class="inside">
+                        <p>
+                            <label class="adp-label-title" for="adp_sender_email">Remitente (From Email):</label>
+                            <input type="email" id="adp_sender_email" name="adp_sender_email" value="<?php echo esc_attr( get_option( 'adp_sender_email' ) ); ?>" class="widefat" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
+                            <span class="description">Debe coincidir con el usuario SMTP para evitar SPAM.</span>
+                        </p>
+                        <hr style="margin: 20px 0; border-top: 1px solid #f0f0f1;">
+                        <p>
+                            <label class="adp-label-title" for="adp_smtp_host">Host SMTP:</label>
+                            <input type="text" id="adp_smtp_host" name="adp_smtp_host" value="<?php echo esc_attr( get_option( 'adp_smtp_host' ) ); ?>" class="widefat">
+                        </p>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="flex: 1;">
+                                <label class="adp-label-title">Puerto:</label>
+                                <input type="number" name="adp_smtp_port" value="<?php echo esc_attr( get_option( 'adp_smtp_port', '587' ) ); ?>" class="widefat">
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="adp-label-title">Seguridad:</label>
+                                <select name="adp_smtp_secure" class="widefat">
+                                    <option value="ssl" <?php selected( get_option( 'adp_smtp_secure' ), 'ssl' ); ?>>SSL</option>
+                                    <option value="tls" <?php selected( get_option( 'adp_smtp_secure' ), 'tls' ); ?>>TLS</option>
+                                    <option value="" <?php selected( get_option( 'adp_smtp_secure' ), '' ); ?>>Ninguna</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p>
+                            <label class="adp-label-title">Usuario SMTP:</label>
+                            <input type="text" name="adp_smtp_user" value="<?php echo esc_attr( get_option( 'adp_smtp_user' ) ); ?>" class="widefat">
+                        </p>
+                        <p>
+                            <label class="adp-label-title">Contraseña SMTP:</label>
+                            <input type="password" name="adp_smtp_pass" value="<?php echo esc_attr( get_option( 'adp_smtp_pass' ) ); ?>" class="widefat">
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <?php submit_button( 'Guardar Configuración', 'primary', 'submit', false, array( 'style' => 'width: 100%; padding: 10px;' ) ); ?>
+                </div>
+
+            </div>
+
+            <div class="adp-sidebar-column" style="flex: 1; min-width: 300px;">
+                
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Modo de Envío</h2></div>
+                    <div class="inside">
+                        <?php $freq = get_option( 'adp_delivery_frequency', 'instant' ); ?>
+                        <div class="adp-radio-group">
+                            <label class="adp-radio-option" style="margin-bottom: 10px;">
+                                <input type="radio" name="adp_delivery_frequency" value="instant" <?php checked( $freq, 'instant' ); ?>> 
+                                <span><strong>Inmediato</strong><br><small style="color:#666; margin-left: 25px; display:block;">Enviar notificación al publicar.</small></span>
+                            </label>
+                            <label class="adp-radio-option">
+                                <input type="radio" name="adp_delivery_frequency" value="monthly" <?php checked( $freq, 'monthly' ); ?>> 
+                                <span><strong>Resumen Mensual</strong><br><small style="color:#666; margin-left: 25px; display:block;">Recopilación automática.</small></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Rendimiento (Throttle)</h2></div>
+                    <div class="inside">
+                        <p class="description" style="margin-bottom: 15px; font-style: italic;">Ajusta esto según los límites de tu hosting.</p>
+                        
+                        <p>
+                            <label class="adp-label-title">Correos por Lote:</label>
+                            <input type="number" name="adp_batch_size" value="<?php echo esc_attr( get_option( 'adp_batch_size', 50 ) ); ?>" class="widefat" min="1" max="500">
+                        </p>
+                        <p>
+                            <label class="adp-label-title">Pausa (Segundos):</label>
+                            <input type="number" name="adp_batch_delay" value="<?php echo esc_attr( get_option( 'adp_batch_delay', 120 ) ); ?>" class="widefat" min="0">
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+</div>

@@ -2,8 +2,6 @@
 
 /**
  * Class ADP_Admin
- *
- * Maneja la interfaz de administración y acciones del backend.
  */
 class ADP_Admin {
 
@@ -18,7 +16,11 @@ class ADP_Admin {
     }
 
     public function enqueue_assets( $hook ) {
-        if ( strpos( $hook, 'another-dispatch-plugin' ) === false && strpos( $hook, 'adp-customizer' ) === false && strpos( $hook, 'adp-debug' ) === false ) {
+        // AÑADIR 'adp-settings' a la lista permitida
+        if ( strpos( $hook, 'another-dispatch-plugin' ) === false && 
+             strpos( $hook, 'adp-customizer' ) === false && 
+             strpos( $hook, 'adp-debug' ) === false &&
+             strpos( $hook, 'adp-settings' ) === false ) {
             return;
         }
         wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.3.0' );
@@ -31,6 +33,7 @@ class ADP_Admin {
     public function add_admin_menu() {
         add_menu_page( 'Dispatch', 'Dispatch', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_dashboard_page' ), 'dashicons-email-alt', 6 );
         add_submenu_page( 'another-dispatch-plugin', 'Dashboard', 'Dashboard', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_dashboard_page' ) );
+        add_submenu_page( 'another-dispatch-plugin', 'Configuración Global', 'Settings', 'manage_options', 'adp-settings', array( $this, 'render_settings_page' ) );
         add_submenu_page( 'another-dispatch-plugin', 'Personalizar Diseño', 'Mail Customizer', 'manage_options', 'adp-customizer', array( $this, 'render_customizer_page' ) );
         add_submenu_page( 'another-dispatch-plugin', 'Estado del Sistema', 'Debug / Logs', 'manage_options', 'adp-debug', array( $this, 'render_debug_page' ) );
     }
@@ -61,26 +64,19 @@ class ADP_Admin {
             exit;
         }
 
-        // ACCIÓN 2: Reenviar Verificación (MODIFICADO)
+        // ACCIÓN 2: Reenviar Verificación
         if ( isset( $_GET['action'], $_GET['email'], $_GET['_wpnonce'] ) && 'adp_resend_verification' === $_GET['action'] ) {
             if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_resend_action' ) ) wp_die( 'Error de seguridad.' );
-            
             $email = sanitize_email( $_GET['email'] );
             $sub = $this->db->get_subscriber( $email );
-
             if ( $sub && 'pending' === $sub->status ) {
                 $new_hash = md5( $email . time() . wp_salt() );
                 $this->db->update_subscriber_hash( $email, $new_hash );
 
                 // USAR ACTION SCHEDULER (Async)
                 if ( function_exists( 'as_enqueue_async_action' ) ) {
-                    as_enqueue_async_action( 
-                        'adp_send_verification_email_event', // Usamos el mismo hook que registramos en class-subscribe.php
-                        array( 'email' => $email, 'hash' => $new_hash ),
-                        'adp_emails'
-                    );
+                    as_enqueue_async_action( 'adp_send_verification_email_event', array( 'email' => $email, 'hash' => $new_hash ), 'adp_emails' );
                 }
-
                 wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'resent_success' ), admin_url( 'admin.php' ) ) );
                 exit;
             }
@@ -120,18 +116,16 @@ class ADP_Admin {
         }
     }
 
-    /**
-     * Renderiza el Dashboard con filtros y métricas desglosadas.
-     */
     public function render_dashboard_page() {
         $current_filter = isset( $_GET['adp_filter'] ) ? sanitize_text_field( $_GET['adp_filter'] ) : 'all';
         $subscribers = $this->db->get_subscribers( 0, 0, $current_filter );
-        
         $count_total   = $this->db->get_subscriber_count( 'all' );
         $count_active  = $this->db->get_subscriber_count( 'active' );
         $count_pending = $this->db->get_subscriber_count( 'pending' );
 
-        $message = ''; $msg_type = 'success';
+        $message = '';
+        $msg_type = 'success';
+
         if ( isset( $_GET['adp_msg'] ) ) {
             switch ( $_GET['adp_msg'] ) {
                 case 'deleted': $message = 'Suscriptor eliminado.'; break;
@@ -143,9 +137,18 @@ class ADP_Admin {
                 case 'no_posts': $message = 'No hay posts.'; $msg_type = 'warning'; break;
             }
         }
-        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) { $message = 'Configuración guardada correctamente.'; }
-
+        
         include ADP_PATH . 'templates/admin/dashboard.php';
+    }
+
+    /**
+     * Renderiza la nueva página de Ajustes.
+     */
+    public function render_settings_page() {
+        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
+             $message = 'Configuración guardada correctamente.';
+        }
+        include ADP_PATH . 'templates/admin/settings.php';
     }
 
     public function render_customizer_page() {
@@ -155,39 +158,19 @@ class ADP_Admin {
         include ADP_PATH . 'templates/admin/customizer.php';
     }
 
-    /**
-     * Renderiza la página de diagnóstico.
-     */
     public function render_debug_page() {
-        // 1. Verificar estado de Action Scheduler
+        // Verificar estado de Action Scheduler
         $as_active = function_exists( 'as_get_scheduled_actions' );
-        $actions_summary = [];
-        $recent_actions = [];
-
+        $actions_summary = []; $recent_actions = [];
         if ( $as_active ) {
             // Conteo por estado para nuestro grupo 'adp_emails'
             $statuses = array( 'pending', 'in-progress', 'complete', 'failed', 'canceled' );
             foreach ( $statuses as $status ) {
-                $count_args = array(
-                    'group' => 'adp_emails',
-                    'status' => $status,
-                    'per_page' => -1,
-                );
-                // as_get_scheduled_actions no tiene un parámetro 'count' directo eficiente en versiones antiguas,
-                // pero contaremos los IDs devueltos.
-                $actions = as_get_scheduled_actions( $count_args, 'ids' );
+                $actions = as_get_scheduled_actions( array( 'group' => 'adp_emails', 'status' => $status, 'per_page' => -1 ), 'ids' );
                 $actions_summary[ $status ] = count( $actions );
             }
-
-            // Obtener las últimas 20 acciones (cualquier estado)
-            $recent_actions = as_get_scheduled_actions( array(
-                'group' => 'adp_emails',
-                'per_page' => 20,
-                'orderby' => 'date',
-                'order' => 'DESC'
-            ) );
+            $recent_actions = as_get_scheduled_actions( array( 'group' => 'adp_emails', 'per_page' => 20, 'orderby' => 'date', 'order' => 'DESC' ) );
         }
-
         include ADP_PATH . 'templates/admin/debug.php';
     }
 }
