@@ -136,7 +136,7 @@ class ADP_Email_Sender {
     }
 
     /**
-     * Envía el correo reemplazando el link de baja.
+     * Envía el correo individual añadiendo headers de Entregabilidad (RFC 8058).
      */
     private function send_individual_email( $email, $subject, $body, $headers ) {
         $hash      = md5( $email . wp_salt() );
@@ -145,8 +145,17 @@ class ADP_Email_Sender {
             home_url( '/' )
         );
         
+        $user_headers = $headers;
+
+        if ( ! is_array( $user_headers ) ) {
+            $user_headers = explode( "\n", str_replace( "\r\n", "\n", $user_headers ) );
+        }
+
+        $user_headers[] = 'List-Unsubscribe: <' . $unsub_url . '>';
+        $user_headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
         $final_body = str_replace( '##UNSUBSCRIBE_URL##', $unsub_url, $body );
-        wp_mail( $email, $subject, $final_body, $headers );
+        
+        wp_mail( $email, $subject, $final_body, $user_headers );
     }
 
     private function get_headers() {
