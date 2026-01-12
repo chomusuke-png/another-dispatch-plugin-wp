@@ -133,4 +133,30 @@ class ADP_DB {
         global $wpdb;
         return $wpdb->delete( $this->table_name, array( 'id' => intval( $id ) ), array( '%d' ) );
     }
+
+    /**
+     * Obtiene un suscriptor por email (para verificar estado).
+     * @param string $email
+     * @return object|null
+     */
+    public function get_subscriber( $email ) {
+        global $wpdb;
+        return $wpdb->get_row( 
+            $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE email = %s", $email ) 
+        );
+    }
+
+    /**
+     * Actualiza el hash de un suscriptor pendiente (Reintento).
+     */
+    public function update_subscriber_hash( $email, $hash ) {
+        global $wpdb;
+        return $wpdb->update(
+            $this->table_name,
+            array( 'activation_hash' => $hash, 'created_at' => current_time( 'mysql' ) ),
+            array( 'email' => $email, 'status' => 'pending' ),
+            array( '%s', '%s' ),
+            array( '%s', '%s' )
+        );
+    }
 }

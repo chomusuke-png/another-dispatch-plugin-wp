@@ -25,38 +25,49 @@ class ADP_Subscribe_Handler {
      * Procesa el formulario POST, valida Honeypot e inicia Double Opt-in.
      */
     public function process_form() {
-        if ( ! isset( $_POST['adp_subscribe_submit'] ) ) {
-            return;
-        }
+        if ( ! isset( $_POST['adp_subscribe_submit'] ) ) return;
 
-        // 1. Verificación Honeypot (Si el campo oculto tiene valor, es spam)
-        if ( ! empty( $_POST['adp_honey_check'] ) ) {
-            // Fallo silencioso o error genérico para despistar al bot
-            return;
-        }
+        // 1. Honeypot
+        if ( ! empty( $_POST['adp_honey_check'] ) ) return;
 
-        if ( ! isset( $_POST['adp_nonce'] ) || ! wp_verify_nonce( $_POST['adp_nonce'], 'adp_save_sub' ) ) {
-            return;
-        }
+        if ( ! isset( $_POST['adp_nonce'] ) || ! wp_verify_nonce( $_POST['adp_nonce'], 'adp_save_sub' ) ) return;
 
         $email = sanitize_email( $_POST['adp_email'] );
         $redirect_url = remove_query_arg( array( 'adp_status', 'adp_action', 'token' ) );
 
         if ( ! is_email( $email ) ) return;
 
-        if ( $this->db->exists( $email ) ) {
-            wp_safe_redirect( add_query_arg( 'adp_status', 'exists', $redirect_url ) );
-            exit;
-        }
-
-        // 2. Crear Hash de Activación y guardar como 'pending'
+        // --- LÓGICA CORREGIDA ---
+        
+        // Buscamos al suscriptor
+        $subscriber = $this->db->get_subscriber( $email );
         $activation_hash = md5( $email . time() . wp_salt() );
-        $saved = $this->db->add_pending_subscriber( $email, $activation_hash );
 
-        if ( $saved ) {
-            $this->send_confirmation_email( $email, $activation_hash );
-            wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
-            exit;
+        if ( $subscriber ) {
+            // CASO A: Ya existe y está activo -> Error "Ya existe"
+            if ( 'active' === $subscriber->status ) {
+                wp_safe_redirect( add_query_arg( 'adp_status', 'exists', $redirect_url ) );
+                exit;
+            } 
+            
+            // CASO B: Ya existe pero está pendiente -> Reenviar confirmación
+            if ( 'pending' === $subscriber->status ) {
+                // Actualizamos el hash para invalidar el anterior y refrescar la fecha
+                $this->db->update_subscriber_hash( $email, $activation_hash );
+                $this->send_confirmation_email( $email, $activation_hash );
+                
+                // Redirigimos al mismo mensaje de "Pendiente" (éxito)
+                wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
+                exit;
+            }
+        } else {
+            // CASO C: No existe -> Crear nuevo
+            $saved = $this->db->add_pending_subscriber( $email, $activation_hash );
+            if ( $saved ) {
+                $this->send_confirmation_email( $email, $activation_hash );
+                wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
+                exit;
+            }
         }
     }
 
