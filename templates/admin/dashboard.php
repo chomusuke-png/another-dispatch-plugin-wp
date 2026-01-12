@@ -125,7 +125,7 @@
                 </div>
                 <div class="inside">
                     
-                    <h3 style="margin: 0 0 10px; font-size: 13px;">1. Conexión SMTP</h3>
+                    <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión SMTP</h3>
                     <p style="font-size: 12px; margin-bottom: 10px; color: #666;">Envía un correo simple al admin para verificar credenciales.</p>
                     <form method="post" action="">
                         <?php wp_nonce_field( 'adp_send_test_email', 'adp_test_email_nonce' ); ?>
@@ -134,7 +134,7 @@
 
                     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
-                    <h3 style="margin: 0 0 10px; font-size: 13px;">2. Simulación de Envío</h3>
+                    <h3 style="margin: 0 0 10px; font-size: 13px;">Simulación de Envío</h3>
                     <?php if ( 'monthly' === $freq ) : ?>
                         <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
                             Estás en modo <strong>Mensual</strong>. Se generará y enviará inmediatamente el resumen del mes pasado.

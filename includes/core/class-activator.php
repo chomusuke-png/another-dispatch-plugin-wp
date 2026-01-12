@@ -3,13 +3,12 @@
 /**
  * Class ADP_Activator
  *
- * Maneja las tareas que deben ejecutarse durante la activación del plugin.
+ * Maneja las tareas de activación y estructura de base de datos.
  */
 class ADP_Activator {
 
     /**
-     * Crea la tabla de base de datos para los suscriptores.
-     * Utiliza dbDelta para asegurar compatibilidad y actualizaciones.
+     * Crea o actualiza la tabla de suscriptores con nuevos campos de seguridad.
      */
     public static function activate() {
         global $wpdb;
@@ -17,9 +16,12 @@ class ADP_Activator {
         $table_name = $wpdb->prefix . 'adp_subscribers';
         $charset_collate = $wpdb->get_charset_collate();
 
+        // Añadimos 'status' y 'activation_hash'
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             email varchar(100) NOT NULL,
+            status varchar(20) DEFAULT 'pending' NOT NULL,
+            activation_hash varchar(64) DEFAULT '' NOT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY email (email)

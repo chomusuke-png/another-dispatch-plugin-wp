@@ -3,7 +3,7 @@
 /**
  * Class ADP_Subscribe_Handler
  *
- * Procesa el envío del formulario POST.
+ * Maneja el procesamiento del formulario (POST) y la activación de cuenta (GET).
  */
 class ADP_Subscribe_Handler {
 
@@ -18,13 +18,20 @@ class ADP_Subscribe_Handler {
     public function __construct( $db ) {
         $this->db = $db;
         add_action( 'init', array( $this, 'process_form' ) );
+        add_action( 'init', array( $this, 'process_activation' ) );
     }
 
     /**
-     * Verifica nonce y guarda datos.
+     * Procesa el formulario POST, valida Honeypot e inicia Double Opt-in.
      */
     public function process_form() {
         if ( ! isset( $_POST['adp_subscribe_submit'] ) ) {
+            return;
+        }
+
+        // 1. Verificación Honeypot (Si el campo oculto tiene valor, es spam)
+        if ( ! empty( $_POST['adp_honey_check'] ) ) {
+            // Fallo silencioso o error genérico para despistar al bot
             return;
         }
 
@@ -33,7 +40,7 @@ class ADP_Subscribe_Handler {
         }
 
         $email = sanitize_email( $_POST['adp_email'] );
-        $redirect_url = remove_query_arg( 'adp_status' );
+        $redirect_url = remove_query_arg( array( 'adp_status', 'adp_action', 'token' ) );
 
         if ( ! is_email( $email ) ) return;
 
@@ -42,10 +49,73 @@ class ADP_Subscribe_Handler {
             exit;
         }
 
-        $saved = $this->db->add_subscriber( $email );
+        // 2. Crear Hash de Activación y guardar como 'pending'
+        $activation_hash = md5( $email . time() . wp_salt() );
+        $saved = $this->db->add_pending_subscriber( $email, $activation_hash );
+
         if ( $saved ) {
-            wp_safe_redirect( add_query_arg( 'adp_status', 'success', $redirect_url ) );
+            $this->send_confirmation_email( $email, $activation_hash );
+            wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
             exit;
         }
+    }
+
+    /**
+     * Procesa la solicitud GET del enlace de confirmación.
+     */
+    public function process_activation() {
+        if ( ! isset( $_GET['adp_action'] ) || 'activate' !== $_GET['adp_action'] ) {
+            return;
+        }
+
+        $email = isset( $_GET['email'] ) ? sanitize_email( $_GET['email'] ) : '';
+        $hash  = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
+
+        if ( empty( $email ) || empty( $hash ) ) {
+            return;
+        }
+
+        $activated = $this->db->activate_subscriber( $email, $hash );
+        $redirect_url = home_url( '/' ); // O una página específica de "Gracias"
+
+        if ( $activated ) {
+            wp_die( 
+                '<h1>¡Suscripción Confirmada!</h1><p>Tu correo ha sido verificado y añadido a la lista.</p><a href="' . esc_url( $redirect_url ) . '">Volver al sitio</a>', 
+                'Activado', 
+                array( 'response' => 200 ) 
+            );
+        } else {
+            wp_die( 'El enlace de activación es inválido o ya fue usado.' );
+        }
+    }
+
+    /**
+     * Envía el correo transaccional con el enlace de activación.
+     *
+     * @param string $email
+     * @param string $hash
+     */
+    private function send_confirmation_email( $email, $hash ) {
+        $blog_name = get_bloginfo( 'name' );
+        $activation_link = add_query_arg(
+            array(
+                'adp_action' => 'activate',
+                'email'      => urlencode( $email ),
+                'token'      => $hash
+            ),
+            home_url( '/' )
+        );
+
+        $subject = "Confirma tu suscripción a $blog_name";
+        
+        // HTML simple para el correo de activación
+        $message  = "<h1>¡Casi listo!</h1>";
+        $message .= "<p>Gracias por unirte a $blog_name. Para empezar a recibir correos, por favor confirma tu dirección haciendo clic abajo:</p>";
+        $message .= "<p><a href='" . esc_url( $activation_link ) . "' style='padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:4px; display:inline-block;'>Confirmar Suscripción</a></p>";
+        $message .= "<p><small>Si no solicitaste esto, puedes ignorar este mensaje.</small></p>";
+
+        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+        wp_mail( $email, $subject, $message, $headers );
     }
 }
