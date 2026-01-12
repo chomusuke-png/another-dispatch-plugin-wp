@@ -12,9 +12,6 @@ class ADP_DB {
      */
     private $table_name;
 
-    /**
-     * Constructor.
-     */
     public function __construct() {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'adp_subscribers';
@@ -22,10 +19,9 @@ class ADP_DB {
 
     /**
      * Inserta un suscriptor en estado pendiente.
-     *
-     * @param string $email Email del usuario.
-     * @param string $hash Token de activación.
-     * @return int|false ID insertado o false en error.
+     * @param string $email
+     * @param string $hash
+     * @return int|false
      */
     public function add_pending_subscriber( $email, $hash ) {
         global $wpdb;
@@ -42,30 +38,20 @@ class ADP_DB {
     }
 
     /**
-     * Activa un suscriptor validando su email y hash.
-     *
-     * @param string $email Email a activar.
-     * @param string $hash Token recibido.
-     * @return bool True si se activó correctamente.
+     * Activa un suscriptor.
+     * @param string $email
+     * @param string $hash
+     * @return bool
      */
     public function activate_subscriber( $email, $hash ) {
         global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$this->table_name} WHERE email = %s AND activation_hash = %s AND status = 'pending'", $email, $hash ) );
 
-        $row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT id FROM {$this->table_name} WHERE email = %s AND activation_hash = %s AND status = 'pending'",
-                $email,
-                $hash
-            )
-        );
-
-        if ( ! $row ) {
-            return false;
-        }
+        if ( ! $row ) return false;
 
         return $wpdb->update(
             $this->table_name,
-            array( 'status' => 'active', 'activation_hash' => '' ), // Limpiamos hash tras activar
+            array( 'status' => 'active', 'activation_hash' => '' ),
             array( 'id' => $row->id ),
             array( '%s', '%s' ),
             array( '%d' )
@@ -73,82 +59,65 @@ class ADP_DB {
     }
 
     /**
-     * Verifica si el email existe (en cualquier estado).
-     *
-     * @param string $email
-     * @return bool
-     */
-    public function exists( $email ) {
-        global $wpdb;
-        $query = $wpdb->prepare( "SELECT id FROM {$this->table_name} WHERE email = %s", $email );
-        return (bool) $wpdb->get_var( $query );
-    }
-
-    /**
-     * Obtiene solo suscriptores ACTIVOS para el envío de correos.
+     * Obtiene suscriptores con filtro de estado.
      *
      * @param int $limit
      * @param int $offset
+     * @param string $status 'active', 'pending', o 'all'.
      * @return array
      */
-    public function get_subscribers( $limit = 0, $offset = 0 ) {
+    public function get_subscribers( $limit = 0, $offset = 0, $status = 'active' ) {
         global $wpdb;
         
-        // Filtramos por status = 'active'
-        if ( $limit > 0 ) {
-            return $wpdb->get_results( 
-                $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE status = 'active' LIMIT %d OFFSET %d", $limit, $offset ), 
-                ARRAY_A 
-            );
+        $where_clause = "";
+        if ( 'all' !== $status ) {
+            // Validamos que el status sea seguro
+            $safe_status = ( 'pending' === $status ) ? 'pending' : 'active';
+            $where_clause = $wpdb->prepare( "WHERE status = %s", $safe_status );
         }
 
-        return $wpdb->get_results( "SELECT * FROM {$this->table_name} WHERE status = 'active'", ARRAY_A );
-    }
-    
-    /**
-     * Elimina un suscriptor.
-     * * @param string $email
-     * @return int|false
-     */
-    public function delete_subscriber( $email ) {
-        global $wpdb;
-        return $wpdb->delete( $this->table_name, array( 'email' => $email ), array( '%s' ) );
+        $limit_clause = "";
+        if ( $limit > 0 ) {
+            $limit_clause = $wpdb->prepare( "LIMIT %d OFFSET %d", $limit, $offset );
+        }
+
+        return $wpdb->get_results( "SELECT * FROM {$this->table_name} $where_clause ORDER BY created_at DESC $limit_clause", ARRAY_A );
     }
 
     /**
-     * Obtiene conteo total (opcional: filtrar por activos).
-     * * @return string|null
+     * Obtiene conteo total filtrado por estado.
+     *
+     * @param string $status 'active', 'pending', o 'all'.
+     * @return string|null
      */
-    public function get_subscriber_count() {
+    public function get_subscriber_count( $status = 'active' ) {
         global $wpdb;
-        return $wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = 'active'" );
+        
+        if ( 'all' === $status ) {
+            return $wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name}" );
+        }
+
+        $safe_status = ( 'pending' === $status ) ? 'pending' : 'active';
+        return $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = %s", $safe_status ) );
     }
+
+    // ... (Mantén los métodos exists, get_subscriber, update_subscriber_hash, delete_subscriber, delete_subscriber_by_id sin cambios)
     
-    /**
-     * Elimina por ID.
-     * * @param int $id
-     * @return int|false
-     */
+    public function exists( $email ) {
+        global $wpdb;
+        return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$this->table_name} WHERE email = %s", $email ) );
+    }
+
     public function delete_subscriber_by_id( $id ) {
         global $wpdb;
         return $wpdb->delete( $this->table_name, array( 'id' => intval( $id ) ), array( '%d' ) );
     }
 
-    /**
-     * Obtiene un suscriptor por email (para verificar estado).
-     * @param string $email
-     * @return object|null
-     */
     public function get_subscriber( $email ) {
         global $wpdb;
-        return $wpdb->get_row( 
-            $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE email = %s", $email ) 
-        );
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE email = %s", $email ) );
     }
 
-    /**
-     * Actualiza el hash de un suscriptor pendiente (Reintento).
-     */
     public function update_subscriber_hash( $email, $hash ) {
         global $wpdb;
         return $wpdb->update(
@@ -158,5 +127,10 @@ class ADP_DB {
             array( '%s', '%s' ),
             array( '%s', '%s' )
         );
+    }
+     
+    public function delete_subscriber( $email ) {
+        global $wpdb;
+        return $wpdb->delete( $this->table_name, array( 'email' => $email ), array( '%s' ) );
     }
 }

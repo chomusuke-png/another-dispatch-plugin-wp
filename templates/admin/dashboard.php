@@ -18,7 +18,19 @@
 
         <div class="adp-main-column">
             <div class="postbox">
-                <div class="postbox-header"><h2 class="hndle">Listado de Emails</h2></div>
+                <div class="postbox-header">
+                    <h2 class="hndle" style="display:inline-block; margin-right: 15px;">Listado de Emails</h2>
+                    
+                    <form method="get" action="" style="display:inline-block;">
+                        <input type="hidden" name="page" value="another-dispatch-plugin" />
+                        <select name="adp_filter" onchange="this.form.submit()" style="font-size: 12px; height: 28px; vertical-align: middle;">
+                            <option value="all" <?php selected( $current_filter, 'all' ); ?>>Todos</option>
+                            <option value="active" <?php selected( $current_filter, 'active' ); ?>>Activos</option>
+                            <option value="pending" <?php selected( $current_filter, 'pending' ); ?>>Pendientes</option>
+                        </select>
+                    </form>
+                </div>
+
                 <div class="inside">
                     <?php if ( ! empty( $subscribers ) ) : ?>
                         <table class="wp-list-table widefat fixed striped table-view-list">
@@ -26,15 +38,25 @@
                                 <tr>
                                     <th style="width: 60px;">ID</th>
                                     <th>Email</th>
+                                    <th style="width: 100px;">Estado</th>
                                     <th>Fecha</th>
-                                    <th style="width: 100px; text-align: center;">Acciones</th>
+                                    <th style="width: 80px; text-align: center;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ( $subscribers as $sub ) : ?>
                                     <tr>
                                         <td>#<?php echo esc_html( $sub['id'] ); ?></td>
-                                        <td><strong><a href="mailto:<?php echo esc_attr( $sub['email'] ); ?>"><?php echo esc_html( $sub['email'] ); ?></a></strong></td>
+                                        <td>
+                                            <strong><a href="mailto:<?php echo esc_attr( $sub['email'] ); ?>"><?php echo esc_html( $sub['email'] ); ?></a></strong>
+                                        </td>
+                                        <td>
+                                            <?php if ( 'active' === $sub['status'] ) : ?>
+                                                <span style="color: green; font-weight: bold; font-size: 11px; background: #e7f7ed; padding: 2px 6px; border-radius: 3px;">ACTIVO</span>
+                                            <?php else : ?>
+                                                <span style="color: #d63638; font-weight: bold; font-size: 11px; background: #fce8e6; padding: 2px 6px; border-radius: 3px;">PENDIENTE</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $sub['created_at'] ) ) ); ?></td>
                                         <td style="text-align: center;">
                                             <?php 
@@ -47,7 +69,7 @@
                             </tbody>
                         </table>
                     <?php else : ?>
-                        <p class="description" style="padding: 10px;">No hay suscriptores registrados todavía.</p>
+                        <p class="description" style="padding: 10px;">No se encontraron suscriptores con este filtro.</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -56,8 +78,23 @@
         <div class="adp-sidebar-column">
 
             <div class="adp-stat-card">
-                <div class="adp-stat-number"><?php echo esc_html( $count ); ?></div>
-                <div class="adp-stat-label">Suscriptores Activos</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <div>
+                        <div class="adp-stat-number" style="font-size: 32px;"><?php echo esc_html( $count_total ); ?></div>
+                        <div class="adp-stat-label">Total Registros</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1; text-align: center; background: #f0f6fc; padding: 10px; border-radius: 4px;">
+                        <strong style="display: block; font-size: 18px; color: #00a32a;"><?php echo esc_html( $count_active ); ?></strong>
+                        <span style="font-size: 11px; text-transform: uppercase; color: #666;">Activos</span>
+                    </div>
+                    <div style="flex: 1; text-align: center; background: #fff8e5; padding: 10px; border-radius: 4px;">
+                        <strong style="display: block; font-size: 18px; color: #dba617;"><?php echo esc_html( $count_pending ); ?></strong>
+                        <span style="font-size: 11px; text-transform: uppercase; color: #666;">Pendientes</span>
+                    </div>
+                </div>
             </div>
 
             <div class="postbox">
