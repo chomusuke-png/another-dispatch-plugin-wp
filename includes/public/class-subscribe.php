@@ -2,34 +2,21 @@
 
 /**
  * Class ADP_Subscribe_Handler
- *
- * Maneja el procesamiento del formulario (POST) y la activación de cuenta (GET).
  */
 class ADP_Subscribe_Handler {
 
-    /**
-     * @var ADP_DB
-     */
     private $db;
 
-    /**
-     * @param ADP_DB $db
-     */
     public function __construct( $db ) {
         $this->db = $db;
         add_action( 'init', array( $this, 'process_form' ) );
         add_action( 'init', array( $this, 'process_activation' ) );
+        add_action( 'adp_send_verification_email_event', array( $this, 'execute_verification_email' ), 10, 2 );
     }
 
-    /**
-     * Procesa el formulario POST, valida Honeypot e inicia Double Opt-in.
-     */
     public function process_form() {
         if ( ! isset( $_POST['adp_subscribe_submit'] ) ) return;
-
-        // 1. Honeypot
         if ( ! empty( $_POST['adp_honey_check'] ) ) return;
-
         if ( ! isset( $_POST['adp_nonce'] ) || ! wp_verify_nonce( $_POST['adp_nonce'], 'adp_save_sub' ) ) return;
 
         $email = sanitize_email( $_POST['adp_email'] );
@@ -37,37 +24,42 @@ class ADP_Subscribe_Handler {
 
         if ( ! is_email( $email ) ) return;
 
-        // --- LÓGICA CORREGIDA ---
-        
-        // Buscamos al suscriptor
         $subscriber = $this->db->get_subscriber( $email );
         $activation_hash = md5( $email . time() . wp_salt() );
 
+        // Lógica de guardado (sin cambios)
+        $should_send = false;
+        
         if ( $subscriber ) {
-            // CASO A: Ya existe y está activo -> Error "Ya existe"
             if ( 'active' === $subscriber->status ) {
                 wp_safe_redirect( add_query_arg( 'adp_status', 'exists', $redirect_url ) );
                 exit;
             } 
-            
-            // CASO B: Ya existe pero está pendiente -> Reenviar confirmación
             if ( 'pending' === $subscriber->status ) {
-                // Actualizamos el hash para invalidar el anterior y refrescar la fecha
                 $this->db->update_subscriber_hash( $email, $activation_hash );
-                $this->send_confirmation_email( $email, $activation_hash );
-                
-                // Redirigimos al mismo mensaje de "Pendiente" (éxito)
-                wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
-                exit;
+                $should_send = true;
             }
         } else {
-            // CASO C: No existe -> Crear nuevo
             $saved = $this->db->add_pending_subscriber( $email, $activation_hash );
-            if ( $saved ) {
-                $this->send_confirmation_email( $email, $activation_hash );
-                wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
-                exit;
+            if ( $saved ) $should_send = true;
+        }
+
+        if ( $should_send ) {
+            // --- CAMBIO: En vez de enviar directo, lo encolamos ---
+            if ( function_exists( 'as_enqueue_async_action' ) ) {
+                // 'async' intenta ejecutarse lo antes posible sin esperar al cron de lotes
+                as_enqueue_async_action( 
+                    'adp_send_verification_email_event', 
+                    array( 'email' => $email, 'hash' => $activation_hash ),
+                    'adp_emails' // Grupo para que salga en el Debug
+                );
+            } else {
+                // Fallback por si AS no carga
+                $this->execute_verification_email( $email, $activation_hash );
             }
+
+            wp_safe_redirect( add_query_arg( 'adp_status', 'pending', $redirect_url ) );
+            exit;
         }
     }
 
@@ -87,7 +79,7 @@ class ADP_Subscribe_Handler {
         }
 
         $activated = $this->db->activate_subscriber( $email, $hash );
-        $redirect_url = home_url( '/' ); // O una página específica de "Gracias"
+        $redirect_url = home_url( '/' );
 
         if ( $activated ) {
             wp_die( 
@@ -101,12 +93,10 @@ class ADP_Subscribe_Handler {
     }
 
     /**
-     * Envía el correo transaccional con el enlace de activación.
-     *
-     * @param string $email
-     * @param string $hash
+     * Esta función ahora es pública para ser llamada por el Hook de Action Scheduler.
+     * (Antes se llamaba send_confirmation_email, le cambié el nombre para ser explícito en el hook)
      */
-    private function send_confirmation_email( $email, $hash ) {
+    public function execute_verification_email( $email, $hash ) {
         $blog_name = get_bloginfo( 'name' );
         $activation_link = add_query_arg(
             array(
@@ -119,14 +109,18 @@ class ADP_Subscribe_Handler {
 
         $subject = "Confirma tu suscripción a $blog_name";
         
-        // HTML simple para el correo de activación
         $message  = "<h1>¡Casi listo!</h1>";
         $message .= "<p>Gracias por unirte a $blog_name. Para empezar a recibir correos, por favor confirma tu dirección haciendo clic abajo:</p>";
         $message .= "<p><a href='" . esc_url( $activation_link ) . "' style='padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:4px; display:inline-block;'>Confirmar Suscripción</a></p>";
         $message .= "<p><small>Si no solicitaste esto, puedes ignorar este mensaje.</small></p>";
 
-        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+        $from = get_option( 'adp_sender_email' ) ?: get_option( 'admin_email' );
+        $headers = array( 
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $blog_name . ' <' . $from . '>'
+        );
 
+        // Envío real
         wp_mail( $email, $subject, $message, $headers );
     }
 }

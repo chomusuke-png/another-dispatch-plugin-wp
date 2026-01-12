@@ -18,7 +18,7 @@ class ADP_Admin {
     }
 
     public function enqueue_assets( $hook ) {
-        if ( strpos( $hook, 'another-dispatch-plugin' ) === false && strpos( $hook, 'adp-customizer' ) === false ) {
+        if ( strpos( $hook, 'another-dispatch-plugin' ) === false && strpos( $hook, 'adp-customizer' ) === false && strpos( $hook, 'adp-debug' ) === false ) {
             return;
         }
         wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.3.0' );
@@ -32,6 +32,7 @@ class ADP_Admin {
         add_menu_page( 'Dispatch', 'Dispatch', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_dashboard_page' ), 'dashicons-email-alt', 6 );
         add_submenu_page( 'another-dispatch-plugin', 'Dashboard', 'Dashboard', 'manage_options', 'another-dispatch-plugin', array( $this, 'render_dashboard_page' ) );
         add_submenu_page( 'another-dispatch-plugin', 'Personalizar Diseño', 'Mail Customizer', 'manage_options', 'adp-customizer', array( $this, 'render_customizer_page' ) );
+        add_submenu_page( 'another-dispatch-plugin', 'Estado del Sistema', 'Debug / Logs', 'manage_options', 'adp-debug', array( $this, 'render_debug_page' ) );
     }
 
     public function register_settings() {
@@ -58,7 +59,7 @@ class ADP_Admin {
             exit;
         }
 
-        // ACCIÓN 2: Reenviar Verificación (NUEVO)
+        // ACCIÓN 2: Reenviar Verificación (MODIFICADO)
         if ( isset( $_GET['action'], $_GET['email'], $_GET['_wpnonce'] ) && 'adp_resend_verification' === $_GET['action'] ) {
             if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'adp_resend_action' ) ) wp_die( 'Error de seguridad.' );
             
@@ -66,33 +67,24 @@ class ADP_Admin {
             $sub = $this->db->get_subscriber( $email );
 
             if ( $sub && 'pending' === $sub->status ) {
-                // Generar nuevo hash y actualizar DB
                 $new_hash = md5( $email . time() . wp_salt() );
                 $this->db->update_subscriber_hash( $email, $new_hash );
 
-                // Preparar y enviar correo
-                $blog_name = get_bloginfo( 'name' );
-                $activation_link = add_query_arg(
-                    array( 'adp_action' => 'activate', 'email' => urlencode( $email ), 'token' => $new_hash ),
-                    home_url( '/' )
-                );
-
-                $subject = "Recordatorio: Confirma tu suscripción a $blog_name";
-                $message  = "<h1>¡Solo falta un paso!</h1>";
-                $message .= "<p>Hemos recibido una solicitud para reenviar tu enlace de activación.</p>";
-                $message .= "<p><a href='" . esc_url( $activation_link ) . "' style='padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:4px; display:inline-block;'>Confirmar Suscripción</a></p>";
-                
-                $from = get_option( 'adp_sender_email' ) ?: get_option( 'admin_email' );
-                $headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $blog_name . ' <' . $from . '>' );
-
-                wp_mail( $email, $subject, $message, $headers );
+                // USAR ACTION SCHEDULER (Async)
+                if ( function_exists( 'as_enqueue_async_action' ) ) {
+                    as_enqueue_async_action( 
+                        'adp_send_verification_email_event', // Usamos el mismo hook que registramos en class-subscribe.php
+                        array( 'email' => $email, 'hash' => $new_hash ),
+                        'adp_emails'
+                    );
+                }
 
                 wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => 'resent_success' ), admin_url( 'admin.php' ) ) );
                 exit;
             }
         }
 
-        // ACCIÓN 3: Tests SMTP y Contenido (Existentes)
+        // ACCIÓN 3: Tests
         if ( isset( $_POST['adp_test_email_submit'] ) ) {
             check_admin_referer( 'adp_send_test_email', 'adp_test_email_nonce' );
             $to = wp_get_current_user()->user_email;
@@ -137,13 +129,11 @@ class ADP_Admin {
         $count_active  = $this->db->get_subscriber_count( 'active' );
         $count_pending = $this->db->get_subscriber_count( 'pending' );
 
-        $message = '';
-        $msg_type = 'success';
-
+        $message = ''; $msg_type = 'success';
         if ( isset( $_GET['adp_msg'] ) ) {
             switch ( $_GET['adp_msg'] ) {
                 case 'deleted': $message = 'Suscriptor eliminado.'; break;
-                case 'resent_success': $message = 'Correo de verificación reenviado correctamente.'; break; // NUEVO MENSAJE
+                case 'resent_success': $message = 'Correo de verificación reenviado correctamente.'; break;
                 case 'test_success': $message = 'Correo de prueba SMTP enviado.'; break;
                 case 'test_error': $message = 'Error SMTP.'; $msg_type = 'error'; break;
                 case 'digest_queued': $message = 'Resumen mensual en cola.'; break;
@@ -151,10 +141,7 @@ class ADP_Admin {
                 case 'no_posts': $message = 'No hay posts.'; $msg_type = 'warning'; break;
             }
         }
-        
-        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
-             $message = 'Configuración guardada correctamente.';
-        }
+        if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) { $message = 'Configuración guardada correctamente.'; }
 
         include ADP_PATH . 'templates/admin/dashboard.php';
     }
@@ -164,5 +151,41 @@ class ADP_Admin {
              $message = 'Diseño actualizado correctamente.';
         }
         include ADP_PATH . 'templates/admin/customizer.php';
+    }
+
+    /**
+     * Renderiza la página de diagnóstico.
+     */
+    public function render_debug_page() {
+        // 1. Verificar estado de Action Scheduler
+        $as_active = function_exists( 'as_get_scheduled_actions' );
+        $actions_summary = [];
+        $recent_actions = [];
+
+        if ( $as_active ) {
+            // Conteo por estado para nuestro grupo 'adp_emails'
+            $statuses = array( 'pending', 'in-progress', 'complete', 'failed', 'canceled' );
+            foreach ( $statuses as $status ) {
+                $count_args = array(
+                    'group' => 'adp_emails',
+                    'status' => $status,
+                    'per_page' => -1,
+                );
+                // as_get_scheduled_actions no tiene un parámetro 'count' directo eficiente en versiones antiguas,
+                // pero contaremos los IDs devueltos.
+                $actions = as_get_scheduled_actions( $count_args, 'ids' );
+                $actions_summary[ $status ] = count( $actions );
+            }
+
+            // Obtener las últimas 20 acciones (cualquier estado)
+            $recent_actions = as_get_scheduled_actions( array(
+                'group' => 'adp_emails',
+                'per_page' => 20,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            ) );
+        }
+
+        include ADP_PATH . 'templates/admin/debug.php';
     }
 }
