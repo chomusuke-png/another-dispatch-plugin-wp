@@ -134,6 +134,22 @@
                             </label>
                         </div>
 
+                        <h3 class="hndle">Rendimiento y Límites</h3>
+                        <p class="description" style="margin-bottom: 15px;">Controla la velocidad de envío para evitar bloqueos de tu hosting.</p>
+                        
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div style="flex: 1;">
+                                <label class="adp-label-title">Correos por Lote (Batch Size):</label>
+                                <input type="number" name="adp_batch_size" value="<?php echo esc_attr( get_option( 'adp_batch_size', 50 ) ); ?>" class="widefat" min="1" max="500">
+                                <p class="description">Recomendado: 20 a 50.</p>
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="adp-label-title">Pausa entre Lotes (Segundos):</label>
+                                <input type="number" name="adp_batch_delay" value="<?php echo esc_attr( get_option( 'adp_batch_delay', 120 ) ); ?>" class="widefat" min="0">
+                                <p class="description">Tiempo de espera antes del siguiente envío.</p>
+                            </div>
+                        </div>
+
                         <h3 class="hndle">SMTP & Identidad</h3>
                         <p>
                             <label class="adp-label-title" for="adp_sender_email">Remitente:</label>
