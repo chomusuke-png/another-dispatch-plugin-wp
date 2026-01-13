@@ -45,7 +45,7 @@ class ADP_Subscribe_Handler {
         }
 
         if ( $should_send ) {
-            // --- CAMBIO: En vez de enviar directo, lo encolamos ---
+            // --- Se coloca en la cola de envio ---
             if ( function_exists( 'as_enqueue_async_action' ) ) {
                 // 'async' intenta ejecutarse lo antes posible sin esperar al cron de lotes
                 as_enqueue_async_action( 
@@ -93,11 +93,12 @@ class ADP_Subscribe_Handler {
     }
 
     /**
-     * Esta función ahora es pública para ser llamada por el Hook de Action Scheduler.
-     * (Antes se llamaba send_confirmation_email, le cambié el nombre para ser explícito en el hook)
+     * Envía el correo utilizando la plantilla visual unificada.
      */
     public function execute_verification_email( $email, $hash ) {
         $blog_name = get_bloginfo( 'name' );
+        
+        // Generar enlace
         $activation_link = add_query_arg(
             array(
                 'adp_action' => 'activate',
@@ -108,19 +109,21 @@ class ADP_Subscribe_Handler {
         );
 
         $subject = "Confirma tu suscripción a $blog_name";
-        
-        $message  = "<h1>¡Casi listo!</h1>";
-        $message .= "<p>Gracias por unirte a $blog_name. Para empezar a recibir correos, por favor confirma tu dirección haciendo clic abajo:</p>";
-        $message .= "<p><a href='" . esc_url( $activation_link ) . "' style='padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:4px; display:inline-block;'>Confirmar Suscripción</a></p>";
-        $message .= "<p><small>Si no solicitaste esto, puedes ignorar este mensaje.</small></p>";
-
         $from = get_option( 'adp_sender_email' ) ?: get_option( 'admin_email' );
+
+        ob_start();
+        include ADP_PATH . 'templates/emails/verification.php';
+        $message = ob_get_clean();
+
         $headers = array( 
             'Content-Type: text/html; charset=UTF-8',
             'From: ' . $blog_name . ' <' . $from . '>'
         );
 
-        // Envío real
-        wp_mail( $email, $subject, $message, $headers );
+        $result = wp_mail( $email, $subject, $message, $headers );
+
+        if ( ! $result ) {
+            throw new Exception( "Falló el envío de verificación a $email." );
+        }
     }
 }
