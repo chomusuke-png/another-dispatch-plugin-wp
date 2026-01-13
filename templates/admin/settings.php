@@ -71,14 +71,21 @@
                     <div class="postbox-header"><h2 class="hndle">Modo de Envío</h2></div>
                     <div class="inside">
                         <?php $freq = get_option( 'adp_delivery_frequency', 'instant' ); ?>
+                        
                         <div class="adp-radio-group">
-                            <label class="adp-radio-option" style="margin-bottom: 10px;">
+                            <label class="adp-radio-option" style="margin-bottom: 10px; display: block;">
                                 <input type="radio" name="adp_delivery_frequency" value="instant" <?php checked( $freq, 'instant' ); ?>> 
                                 <span><strong>Inmediato</strong><br><small style="color:#666; margin-left: 25px; display:block;">Enviar notificación al publicar.</small></span>
                             </label>
-                            <label class="adp-radio-option">
+                            
+                            <label class="adp-radio-option" style="margin-bottom: 10px; display: block;">
+                                <input type="radio" name="adp_delivery_frequency" value="weekly" <?php checked( $freq, 'weekly' ); ?>> 
+                                <span><strong>Resumen Semanal</strong><br><small style="color:#666; margin-left: 25px; display:block;">Recompilación todos los lunes (posts de la semana anterior).</small></span>
+                            </label>
+                            
+                            <label class="adp-radio-option" style="margin-bottom: 10px; display: block;">
                                 <input type="radio" name="adp_delivery_frequency" value="monthly" <?php checked( $freq, 'monthly' ); ?>> 
-                                <span><strong>Resumen Mensual</strong><br><small style="color:#666; margin-left: 25px; display:block;">Recopilación automática.</small></span>
+                                <span><strong>Resumen Mensual</strong><br><small style="color:#666; margin-left: 25px; display:block;">Recopilación de posts del mes.</small></span>
                             </label>
                         </div>
                     </div>

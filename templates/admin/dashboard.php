@@ -40,44 +40,56 @@
                                     <th>Email</th>
                                     <th style="width: 100px;">Estado</th>
                                     <th>Fecha</th>
-                                    <th style="width: 120px; text-align: center;">Acciones</th>
+                                    <th style="width: 100px; text-align: center;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ( $subscribers as $sub ) : ?>
                                     <tr>
-                                        <td>#<?php echo esc_html( $sub['id'] ); ?></td>
-                                        <td>
+                                        <td style="vertical-align: middle;">#<?php echo esc_html( $sub['id'] ); ?></td>
+                                        <td style="vertical-align: middle;">
                                             <strong><a href="mailto:<?php echo esc_attr( $sub['email'] ); ?>"><?php echo esc_html( $sub['email'] ); ?></a></strong>
                                         </td>
-                                        <td>
+                                        <td style="vertical-align: middle;">
                                             <?php if ( 'active' === $sub['status'] ) : ?>
-                                                <span style="color: green; font-weight: bold; font-size: 11px; background: #e7f7ed; padding: 2px 6px; border-radius: 3px;">ACTIVO</span>
+                                                <span style="color: #008a20; font-weight: 600; font-size: 11px; background: #dff6dd; padding: 3px 8px; border-radius: 12px;">ACTIVO</span>
                                             <?php else : ?>
-                                                <span style="color: #d63638; font-weight: bold; font-size: 11px; background: #fce8e6; padding: 2px 6px; border-radius: 3px;">PENDIENTE</span>
+                                                <span style="color: #d63638; font-weight: 600; font-size: 11px; background: #fbeaea; padding: 3px 8px; border-radius: 12px;">PENDIENTE</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $sub['created_at'] ) ) ); ?></td>
-                                        <td style="text-align: center;">
-                                            <?php 
-                                            $del_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_delete_subscriber&subscriber_id=' . $sub['id'] ), 'adp_delete_subscriber_action' ); 
-                                            ?>
-                                            <?php if ( 'pending' === $sub['status'] ) : ?>
-                                                <?php $resend_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_resend_verification&email=' . urlencode($sub['email']) ), 'adp_resend_action' ); ?>
-                                                <a href="<?php echo esc_url( $resend_url ); ?>" class="button button-small" title="Reenviar verificación" style="margin-right: 5px;">
-                                                    <span class="dashicons dashicons-email-alt" style="line-height: 26px; font-size: 16px; color: #2271b1;"></span>
+                                        <td style="vertical-align: middle;"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $sub['created_at'] ) ) ); ?></td>
+                                        
+                                        <td style="vertical-align: middle;">
+                                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                                
+                                                <?php if ( 'pending' === $sub['status'] ) : ?>
+                                                    <?php $resend_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_resend_verification&email=' . urlencode($sub['email']) ), 'adp_resend_action' ); ?>
+                                                    
+                                                    <a href="<?php echo esc_url( $resend_url ); ?>" class="button button-small" title="Reenviar verificación" style="display: flex; align-items: center; justify-content: center; width: 30px; height: 28px; padding: 0;">
+                                                        <span class="dashicons dashicons-email-alt" style="color: #2271b1; font-size: 18px; margin: 0;"></span>
+                                                    </a>
+                                                <?php endif; ?>
+
+                                                <?php 
+                                                $del_url = wp_nonce_url( admin_url( 'admin.php?page=another-dispatch-plugin&action=adp_delete_subscriber&subscriber_id=' . $sub['id'] ), 'adp_delete_subscriber_action' ); 
+                                                ?>
+                                                
+                                                <a href="<?php echo esc_url( $del_url ); ?>" class="button button-small" onclick="return confirm('¿Borrar suscriptor?');" title="Eliminar suscriptor" style="display: flex; align-items: center; justify-content: center; width: 30px; height: 28px; padding: 0; border-color: #d63638;">
+                                                    <span class="dashicons dashicons-trash" style="color: #d63638; font-size: 18px; margin: 0;"></span>
                                                 </a>
-                                            <?php else : ?>
-                                                <button class="button button-small" disabled style="margin-right: 5px; opacity: 0.5;"><span class="dashicons dashicons-yes" style="line-height: 26px; font-size: 16px; color: green;"></span></button>
-                                            <?php endif; ?>
-                                            <a href="<?php echo esc_url( $del_url ); ?>" class="button button-small button-link-delete" onclick="return confirm('¿Borrar suscriptor?');"><span class="dashicons dashicons-trash" style="line-height: 26px; font-size: 16px;"></span></a>
+
+                                            </div>
                                         </td>
+
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     <?php else : ?>
-                        <p class="description" style="padding: 10px;">No se encontraron suscriptores con este filtro.</p>
+                        <div style="padding: 20px; text-align: center; color: #666;">
+                            <span class="dashicons dashicons-groups" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block; width: 100%;"></span>
+                            <p>No se encontraron suscriptores con este filtro.</p>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -112,8 +124,7 @@
                     <p><strong>Exportar Lista:</strong></p>
                     <form method="post" action="">
                         <?php wp_nonce_field( 'adp_export_csv', 'adp_export_nonce' ); ?>
-                        <input type="submit" name="adp_action_export_csv" class="button" value="Descargar CSV">
-                        <p class="description" style="margin-top:5px;">Descarga todos los suscriptores.</p>
+                        <input type="submit" name="adp_action_export_csv" class="button" value="Descargar CSV" style="width: 100%;">
                     </form>
 
                     <hr style="margin: 15px 0;">
@@ -125,7 +136,7 @@
                         <p class="description" style="margin-bottom: 10px;">
                             Sube un archivo CSV con una columna de emails. Los nuevos se añadirán como <strong>Activos</strong>. Los duplicados se ignorarán.
                         </p>
-                        <input type="submit" name="adp_action_import_csv" class="button button-primary" value="Subir e Importar">
+                        <input type="submit" name="adp_action_import_csv" class="button button-primary" value="Subir e Importar" style="width: 100%;">
                     </form>
 
                 </div>

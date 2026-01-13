@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.3.6
+ * Version: 1.3.7
  * Author: Zumito
  */
 
@@ -35,6 +35,10 @@ function adp_add_cron_intervals( $schedules ) {
     $schedules['monthly'] = array(
         'interval' => 2635200, // 30.5 días en segundos aprox
         'display'  => __( 'Una vez al mes' )
+    );
+    $schedules['weekly'] = array(
+        'interval' => 604800, // 7 días en segundos
+        'display'  => __( 'Una vez a la semana' )
     );
     return $schedules;
 }
