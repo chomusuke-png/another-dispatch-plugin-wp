@@ -13,6 +13,7 @@ class ADP_Admin {
         add_action( 'admin_init', array( $this, 'process_actions' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+        add_action( 'wp_ajax_adp_refresh_debug_stats', array( $this, 'ajax_refresh_debug_stats' ) );
     }
 
     public function enqueue_assets( $hook ) {
@@ -28,6 +29,69 @@ class ADP_Admin {
             wp_enqueue_style( 'wp-color-picker' );
             wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'wp-color-picker' ), '1.0.0', true );
         }
+        wp_localize_script( 'adp-admin-js', 'adp_vars', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'adp_debug_refresh_nonce' ),
+            'is_debug_page' => ( strpos( $hook, 'adp-debug' ) !== false ) ? '1' : '0'
+        ));
+    }
+
+    /**
+     * Endpoint AJAX para refrescar datos de debug.
+     */
+    public function ajax_refresh_debug_stats() {
+        check_ajax_referer( 'adp_debug_refresh_nonce', 'nonce' );
+
+        if ( ! function_exists( 'as_get_scheduled_actions' ) ) {
+            wp_send_json_error( 'Action Scheduler no activo' );
+        }
+
+        // 1. Obtener Contadores
+        $statuses = array( 'pending', 'in-progress', 'complete', 'failed' );
+        $stats = array();
+        foreach ( $statuses as $status ) {
+            $actions = as_get_scheduled_actions( array( 'group' => 'adp_emails', 'status' => $status, 'per_page' => -1 ), 'ids' );
+            $stats[ $status ] = count( $actions );
+        }
+
+        // 2. Obtener HTML de la tabla
+        $recent_actions = as_get_scheduled_actions( array( 'group' => 'adp_emails', 'per_page' => 20, 'orderby' => 'date', 'order' => 'DESC' ) );
+        
+        ob_start();
+        if ( empty( $recent_actions ) ) {
+            echo '<tr><td colspan="5">No hay actividad reciente.</td></tr>';
+        } else {
+            foreach ( $recent_actions as $action_id => $action ) {
+                $hook = $action->get_hook();
+                $args = $action->get_args();
+                $schedule = $action->get_schedule();
+                $next_run = $schedule->get_date();
+                $store = ActionScheduler::store();
+                $status_label = $store->get_status( $action_id );
+                
+                $status_color = '#72aee6';
+                if ( 'complete' === $status_label ) $status_color = '#00a32a';
+                if ( 'failed' === $status_label ) $status_color = '#d63638';
+                if ( 'pending' === $status_label ) $status_color = '#dba617';
+                
+                echo '<tr>';
+                echo '<td><strong>' . esc_html( $hook ) . '</strong><br><small>ID: ' . intval( $action_id ) . '</small></td>';
+                echo '<td>';
+                if ( ! empty( $args ) ) echo '<pre style="margin:0; font-size:10px;">' . print_r( $args, true ) . '</pre>';
+                else echo '-';
+                echo '</td>';
+                echo '<td><span style="font-weight:bold; color:' . $status_color . '; text-transform:uppercase;">' . esc_html( $status_label ) . '</span></td>';
+                echo '<td>' . ( $next_run ? $next_run->format( 'Y-m-d H:i:s' ) : '-' ) . '</td>';
+                echo '<td>' . ( 'failed' === $status_label ? '<a href="' . admin_url( 'tools.php?page=action-scheduler&s=' . $action_id ) . '" target="_blank">Ver error</a>' : '-' ) . '</td>';
+                echo '</tr>';
+            }
+        }
+        $table_html = ob_get_clean();
+
+        wp_send_json_success( array(
+            'stats' => $stats,
+            'table_html' => $table_html
+        ));
     }
 
     public function add_admin_menu() {
