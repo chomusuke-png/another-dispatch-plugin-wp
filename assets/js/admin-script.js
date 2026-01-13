@@ -1,12 +1,11 @@
 jQuery(document).ready(function($) {
     
-    // --- Lógica del Color Picker (Existente) ---
+    // --- Lógica del Color Picker ---
     if ( typeof $.fn.wpColorPicker === 'function' ) {
         $('.adp-color-field').wpColorPicker();
     }
 
-    // --- NUEVO: Debug Live Monitor ---
-    // Solo ejecutamos esto si estamos en la página de debug
+    // --- Debug Live Monitor ---
     if ( typeof adp_vars !== 'undefined' && adp_vars.is_debug_page === '1' ) {
         
         function refreshDebugStats() {
