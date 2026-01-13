@@ -15,6 +15,7 @@ class ADP_Email_Sender {
 
         add_action( 'adp_process_batch_send', array( $this, 'process_batch' ), 10, 2 );
         add_action( 'adp_monthly_digest_event', array( $this, 'send_digest_batch' ), 10, 1 );
+        add_action( 'adp_weekly_digest_event', array( $this, 'send_weekly_digest_batch' ), 10, 1 );
     }
 
     /**
