@@ -1,7 +1,12 @@
 <?php
 /**
- * Template: Plantilla para envío MENSUAL (Digest).
- * Variables: $blog_name, $email_title, $posts_list (array), $unsubscribe_link
+ * Template: Plantilla para envío de resúmenes (Digest).
+ * Soporta envíos Semanales y Mensuales.
+ * * Variables disponibles:
+ * @var string $blog_name Nombre del sitio.
+ * @var string $email_title Título del correo (ej. "Resumen de Enero" o "Resumen Semanal").
+ * @var array  $posts_list Array de objetos WP_Post.
+ * @var string $unsubscribe_link URL para darse de baja.
  */
 ?>
 <!DOCTYPE html>
@@ -34,7 +39,7 @@
                         <div class="post-item">
                             <?php if ( $thumb ) : ?>
                                 <a href="<?php echo esc_url( $link ); ?>">
-                                    <img src="<?php echo esc_url( $thumb ); ?>" class="post-thumb" alt="">
+                                    <img src="<?php echo esc_url( $thumb ); ?>" class="post-thumb" alt="<?php echo esc_attr( $post->post_title ); ?>">
                                 </a>
                             <?php endif; ?>
                             
@@ -50,13 +55,13 @@
                         </div>
                     <?php endforeach; ?>
                 <?php else : ?>
-                    <p style="text-align: center;">No hubo publicaciones este mes.</p>
+                    <p style="text-align: center;">No hubo publicaciones nuevas en este periodo.</p>
                 <?php endif; ?>
             </div>
         </div>
 
         <div class="footer">
-            <p>Este es tu resumen mensual de <strong><?php echo esc_html( $blog_name ); ?></strong>.</p>
+            <p>Este es tu resumen de actualizaciones de <strong><?php echo esc_html( $blog_name ); ?></strong>.</p>
             <p><a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja</a></p>
         </div>
     </div>
