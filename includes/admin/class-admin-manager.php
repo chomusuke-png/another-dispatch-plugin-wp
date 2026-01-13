@@ -220,22 +220,44 @@ class ADP_Admin {
             exit;
         }
 
+        // ACCIÓN 6: Fuerza bruta
         if ( isset( $_POST['adp_test_content_submit'] ) ) {
             check_admin_referer( 'adp_test_content_action', 'adp_test_content_nonce' );
+            
             $freq = get_option( 'adp_delivery_frequency', 'instant' );
             $msg_code = 'no_posts';
-            if ( 'monthly' === $freq ) {
-                if ( function_exists( 'as_schedule_single_action' ) ) {
-                     as_schedule_single_action( time(), 'adp_monthly_digest_event', array( 0 ) );
-                     $msg_code = 'digest_queued';
+
+            // Verificamos que Action Scheduler esté disponible
+            if ( function_exists( 'as_schedule_single_action' ) ) {
+                
+                if ( 'monthly' === $freq ) {
+                    // CASO 1: Mensual
+                    as_schedule_single_action( time(), 'adp_monthly_digest_event', array( 0 ), 'adp_emails' );
+                    $msg_code = 'digest_queued';
+
+                } elseif ( 'weekly' === $freq ) {
+                    // CASO 2: Semanal
+                    as_schedule_single_action( time(), 'adp_weekly_digest_event', array( 0 ), 'adp_emails' );
+                    $msg_code = 'digest_queued';
+
+                } else {
+                    // CASO 3: Inmediato (Último post)
+                    $latest_posts = get_posts( array( 'numberposts' => 1, 'post_status' => 'publish' ) );
+                    if ( ! empty( $latest_posts ) ) {
+                        as_schedule_single_action( 
+                            time(), 
+                            'adp_process_batch_send', 
+                            array( 'post_id' => $latest_posts[0]->ID, 'offset' => 0 ), 
+                            'adp_emails' 
+                        );
+                        $msg_code = 'instant_queued';
+                    }
                 }
             } else {
-                $latest_posts = get_posts( array( 'numberposts' => 1, 'post_status' => 'publish' ) );
-                if ( ! empty( $latest_posts ) && function_exists( 'as_schedule_single_action' ) ) {
-                    as_schedule_single_action( time(), 'adp_process_batch_send', array( 'post_id' => $latest_posts[0]->ID, 'offset' => 0 ), 'adp_emails' );
-                    $msg_code = 'instant_queued';
-                }
+                // Fallback de seguridad por si AS no está
+                $msg_code = 'test_error';
             }
+
             wp_safe_redirect( add_query_arg( array( 'page' => 'another-dispatch-plugin', 'adp_msg' => $msg_code ), admin_url( 'admin.php' ) ) );
             exit;
         }
