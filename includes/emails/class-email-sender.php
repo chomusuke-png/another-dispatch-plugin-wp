@@ -89,7 +89,13 @@ class ADP_Email_Sender {
      * @param int $offset Paginación de suscriptores.
      */
     public function send_digest_batch( $offset = 0 ) {
-        if ( 'monthly' !== get_option( 'adp_delivery_frequency' ) ) return;
+        // [DEBUG] Inicio traza mensual
+        error_log( '[ADP DEBUG] Iniciando send_digest_batch. Frecuencia configurada: ' . get_option( 'adp_delivery_frequency' ) );
+
+        if ( 'monthly' !== get_option( 'adp_delivery_frequency' ) ) {
+            error_log( '[ADP DEBUG] ABORTADO: La frecuencia no es monthly.' );
+            return;
+        }
 
         $first_day = date( 'Y-m-01', strtotime( 'last month' ) );
         $last_day  = date( 'Y-m-t', strtotime( 'last month' ) );
@@ -105,12 +111,23 @@ class ADP_Email_Sender {
      * @param int $offset Paginación de suscriptores.
      */
     public function send_weekly_digest_batch( $offset = 0 ) {
-        if ( 'weekly' !== get_option( 'adp_delivery_frequency' ) ) return;
+        // [DEBUG] Inicio traza semanal
+        $freq = get_option( 'adp_delivery_frequency' );
+        error_log( '[ADP DEBUG] Iniciando send_weekly_digest_batch. Frecuencia actual en DB: "' . $freq . '"' );
 
-        // Definir rango: últimos 7 días terminando ayer (o semana calendario anterior)
-        $start_date = date( 'Y-m-d', strtotime( '-1 week Monday' ) ); // Lunes pasado
-        $end_date   = date( 'Y-m-d', strtotime( 'last Sunday' ) );    // Domingo pasado
+        if ( 'weekly' !== $freq ) {
+            // [DEBUG] Razón de fallo común #1
+            error_log( '[ADP DEBUG] ABORTADO: La frecuencia en ajustes no es "weekly". El botón forzó el evento, pero la función lo rechaza por seguridad.' );
+            return;
+        }
+
+        // Usamos 'monday last week' y 'sunday last week' que son más seguros en PHP
+        $start_date = date( 'Y-m-d', strtotime( 'monday last week' ) );
+        $end_date   = date( 'Y-m-d', strtotime( 'sunday last week' ) );
         
+        // [DEBUG] Verificación de fechas
+        error_log( '[ADP DEBUG] Rango de fechas calculado: ' . $start_date . ' al ' . $end_date );
+
         $title = 'Resumen Semanal (' . date_i18n( 'd M', strtotime( $start_date ) ) . ' - ' . date_i18n( 'd M', strtotime( $end_date ) ) . ')';
 
         $this->process_digest_dispatch( $start_date, $end_date, $title, 'adp_weekly_digest_event', $offset );
@@ -126,22 +143,39 @@ class ADP_Email_Sender {
      * @param int    $offset Paginación actual.
      */
     private function process_digest_dispatch( $start_date, $end_date, $email_title, $hook_name, $offset ) {
-        $posts = get_posts( array(
+        $args = array(
             'post_type'      => 'post',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
             'date_query'     => array(
                 array( 'after' => $start_date, 'before' => $end_date, 'inclusive' => true ),
             ),
-        ) );
+        );
+        
+        $posts = get_posts( $args );
 
-        // Si no hay posts, no enviamos nada (o podríamos enviar un aviso vacío, según preferencia)
-        if ( empty( $posts ) ) return;
+        // [DEBUG] Verificación de posts
+        if ( empty( $posts ) ) {
+            error_log( '[ADP DEBUG] ABORTADO: No se encontraron posts en el rango solicitado.' );
+            // [DEBUG] Dump de la query para ver qué falló
+            error_log( '[ADP DEBUG] Query args: ' . print_r( $args, true ) );
+            return;
+        } else {
+            error_log( '[ADP DEBUG] Posts encontrados: ' . count( $posts ) );
+            foreach($posts as $p) {
+                error_log( '[ADP DEBUG] - Post candidato: ' . $p->post_title . ' (' . $p->post_date . ')' );
+            }
+        }
 
         $limit       = $this->get_batch_size();
         $subscribers = $this->db->get_subscribers( $limit, $offset, 'active' );
         
-        if ( empty( $subscribers ) ) return;
+        // [DEBUG] Verificación de suscriptores
+        if ( empty( $subscribers ) ) {
+            error_log( '[ADP DEBUG] ABORTADO: No hay suscriptores activos en este lote (Offset: ' . $offset . ').' );
+            return;
+        }
+        error_log( '[ADP DEBUG] Enviando lote a ' . count($subscribers) . ' suscriptores.' );
 
         $blog_name  = get_bloginfo( 'name' );
         $posts_list = $posts; 
@@ -161,8 +195,11 @@ class ADP_Email_Sender {
 
         // Reprogramar siguiente lote si quedan suscriptores
         if ( count( $subscribers ) === $limit ) {
+            error_log( '[ADP DEBUG] Reprogramando siguiente lote...' );
             $delay = $this->get_batch_delay();
             wp_schedule_single_event( time() + $delay, $hook_name, array( $offset + $limit ) );
+        } else {
+            error_log( '[ADP DEBUG] Envío finalizado (último lote).' );
         }
     }
 
@@ -207,7 +244,12 @@ class ADP_Email_Sender {
         $user_headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 
         $final_body = str_replace( '##UNSUBSCRIBE_URL##', $unsub_url, $body );
-        wp_mail( $email, $subject, $final_body, $user_headers );
+        
+        // [DEBUG] Intento final de envío
+        $result = wp_mail( $email, $subject, $final_body, $user_headers );
+        if ( ! $result ) {
+            error_log( '[ADP DEBUG] ERROR: wp_mail falló para ' . $email );
+        }
     }
 
     /**
