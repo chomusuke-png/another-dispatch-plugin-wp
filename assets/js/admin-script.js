@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
 
-    // 1. Inicializar Color Picker con callback 'change'
+    // Inicializar Color Picker con callback 'change'
     $('.adp-color-field').wpColorPicker({
         change: function(event, ui) {
             var color = ui.color.toString();
@@ -21,7 +21,7 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // 2. Live Preview del Footer Text
+    // Live Preview del Footer Text
     $('#adp-footer-input').on('input', function() {
         var text = $(this).val();
         // Permitir saltos de linea simples en preview
@@ -29,9 +29,8 @@ jQuery(document).ready(function($) {
         $('#adp-preview-footer-content').html(text);
     });
 
-    // 3. WP Media Uploader para Logo
+    // WP Media Uploader para Logo
     var frame;
-    
     $('#adp-upload-logo-btn').on('click', function(e) {
         e.preventDefault();
 
@@ -87,41 +86,50 @@ jQuery(document).ready(function($) {
         $('#adp-preview-blogname').show(); // Volver a mostrar texto
     });
 
-    // Debug Stats (Existente)
-    $('#adp-refresh-stats').on('click', function(e) {
-        e.preventDefault();
-        var $btn = $(this);
-        var $table = $('#adp-debug-table-body');
+    if ( typeof adp_vars !== 'undefined' && adp_vars.is_debug_page === '1' ) {
         
-        $btn.addClass('updating').text('Refrescando...');
-        $table.css('opacity', '0.5');
+        function refreshDebugStats() {
+            var $table = $('#adp-debug-table-body');
+            var $indicator = $('#adp-live-indicator span.dashicons');
 
-        $.ajax({
-            url: adp_vars.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'adp_refresh_debug_stats',
-                nonce: adp_vars.nonce
-            },
-            success: function(response) {
-                if(response.success) {
-                    // Actualizar contadores
-                    $('.adp-stat-card').each(function() {
-                        var status = $(this).data('status');
-                        if(response.data.stats[status] !== undefined) {
-                            $(this).find('strong').text(response.data.stats[status]);
+            // Efecto visual de carga (opcional)
+            $table.css('opacity', '0.6'); 
+            
+            $.ajax({
+                url: adp_vars.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'adp_refresh_debug_stats',
+                    nonce: adp_vars.nonce
+                },
+                success: function(response) {
+                    if(response.success) {
+                        // 1. Actualizar Tarjetas de Contadores
+                        // Buscamos por ID específico que definiste en debug.php
+                        if(response.data.stats) {
+                            $('#adp-count-pending').text(response.data.stats['pending']);
+                            $('#adp-count-complete').text(response.data.stats['complete']);
+                            $('#adp-count-failed').text(response.data.stats['failed']);
+                            $('#adp-count-in-progress').text(response.data.stats['in-progress']);
                         }
-                    });
-                    // Actualizar tabla
-                    $table.html(response.data.table_html).css('opacity', '1');
-                } else {
-                    alert('Error: ' + response.data);
+
+                        // 2. Actualizar Tabla
+                        if(response.data.table_html) {
+                            $table.html(response.data.table_html);
+                        }
+                    }
+                },
+                complete: function() {
+                    $table.css('opacity', '1');
                 }
-            },
-            complete: function() {
-                $btn.removeClass('updating').text('Refrescar Datos');
-            }
-        });
-    });
+            });
+        }
+
+        // Ejecutar inmediatamente al cargar
+        // refreshDebugStats(); 
+
+        // Ejecutar cada 5 segundos (Polling)
+        setInterval(refreshDebugStats, 5000);
+    }
 
 });
