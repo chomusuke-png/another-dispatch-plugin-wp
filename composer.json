@@ -1,0 +1,23 @@
+{
+  "name": "zumito/another-dispatch-plugin",
+  "description": "Sistema modular de suscripción para WordPress.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Zumito",
+      "email": "owokenji@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "classmap": [
+      "includes/"
+    ]
+  },
+  "config": {
+    "optimize-autoloader": true
+  }
+}
