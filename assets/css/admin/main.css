@@ -1,7 +1,7 @@
 /**
  * Archivo: assets/css/admin/main.css
- * Descripción: Estilos globales, variables CSS y componentes compartidos del plugin.
- * Versión: 1.0.0
+ * Descripción: Estilos globales, variables CSS y componentes compartidos.
+ * Cambios: Eliminación de sombras y refinamiento de variables.
  */
 
 :root {
@@ -36,7 +36,6 @@
 }
 
 /* --- Componentes: Tarjetas (Stat Cards) --- */
-/* Se mueve aquí porque podría usarse en otras pantallas */
 .adp-stat-card {
     background: var(--adp-bg-white);
     border: 1px solid var(--adp-border);
@@ -44,6 +43,8 @@
     border-radius: var(--adp-radius);
     padding: var(--adp-spacing-unit);
     margin-bottom: 20px;
+    /* Limpieza: Sin sombras */
+    box-shadow: none; 
 }
 
 .adp-stat-number {

@@ -39,7 +39,7 @@ class ADP_Admin {
             wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
             
-            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery', 'wp-color-picker' ), $version, true );
+            wp_enqueue_script( 'adp-customizer-js', ADP_URL . 'assets/js/admin-customizer.js', array( 'jquery', 'wp-color-picker' ), $version, false );
 
         } elseif ( strpos( $hook, 'adp-debug' ) !== false ) {
             
