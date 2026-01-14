@@ -24,11 +24,19 @@ class ADP_Admin {
              strpos( $hook, 'adp-settings' ) === false ) {
             return;
         }
-        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.3.0' );
+        
+        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.3.1' );
+
+        // SOLO en la página del Customizer cargamos lo necesario para medios y colores
         if ( strpos( $hook, 'adp-customizer' ) !== false ) {
+            wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
-            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'wp-color-picker' ), '1.0.0', true );
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery', 'wp-color-picker' ), '1.1.0', true );
+        } else {
+            // En otras páginas cargamos el JS normal sin dependencias extra
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery' ), '1.1.0', true );
         }
+
         wp_localize_script( 'adp-admin-js', 'adp_vars', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'adp_debug_refresh_nonce' ),
@@ -103,6 +111,7 @@ class ADP_Admin {
     }
 
     public function register_settings() {
+        // Ajustes Generales
         register_setting( 'adp_plugin_settings', 'adp_delivery_frequency', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_sender_email', 'sanitize_email' );
         register_setting( 'adp_plugin_settings', 'adp_batch_size', 'absint' );
@@ -112,11 +121,17 @@ class ADP_Admin {
         register_setting( 'adp_plugin_settings', 'adp_smtp_secure', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_user', 'sanitize_text_field' );
         register_setting( 'adp_plugin_settings', 'adp_smtp_pass', 'sanitize_text_field' );
+
+        // Customizer: Colores
         register_setting( 'adp_customizer_settings', 'adp_color_header_bg', 'sanitize_hex_color' );
         register_setting( 'adp_customizer_settings', 'adp_color_header_text', 'sanitize_hex_color' );
         register_setting( 'adp_customizer_settings', 'adp_color_btn_bg', 'sanitize_hex_color' );
         register_setting( 'adp_customizer_settings', 'adp_color_btn_text', 'sanitize_hex_color' );
         register_setting( 'adp_customizer_settings', 'adp_color_links', 'sanitize_hex_color' );
+
+        // Customizer: Branding
+        register_setting( 'adp_customizer_settings', 'adp_logo_url', 'esc_url_raw' ); // <--- NUEVO
+        register_setting( 'adp_customizer_settings', 'adp_footer_text', 'wp_kses_post' ); // <--- NUEVO (Permite HTML básico)
     }
 
     public function process_actions() {

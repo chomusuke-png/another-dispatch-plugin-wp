@@ -177,3 +177,49 @@
     width: 18px;
     height: 18px;
 }
+
+/* Customizer Grid Layout */
+.adp-customizer-grid {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.adp-controls-pane {
+    flex: 1;
+    min-width: 300px;
+    max-width: 450px;
+}
+
+.adp-preview-pane {
+    flex: 2;
+    background: #f0f0f1;
+    border: 1px solid #ccd0d4;
+    padding: 40px;
+    border-radius: 4px;
+}
+
+.adp-fake-email {
+    background: #ffffff;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    overflow: hidden; /* Para que el header bg no se salga */
+}
+
+/* Sticky Preview */
+.adp-sticky-preview {
+    position: sticky;
+    top: 50px;
+}
+
+@media (max-width: 960px) {
+    .adp-customizer-grid {
+        flex-direction: column;
+    }
+    .adp-controls-pane, .adp-preview-pane {
+        width: 100%;
+        max-width: 100%;
+    }
+}
