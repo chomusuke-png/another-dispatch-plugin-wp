@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: Zumito
  */
 
@@ -15,13 +15,18 @@ define( 'ADP_URL', plugin_dir_url( __FILE__ ) );
 
 require_once ADP_PATH . 'vendor/autoload.php';
 
+$as_file = ADP_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+if ( file_exists( $as_file ) ) {
+    require_once $as_file;
+}
+
 function adp_add_cron_intervals( $schedules ) {
     $schedules['monthly'] = array(
-        'interval' => 2635200, // 30.5 días en segundos aprox
+        'interval' => 2635200,
         'display'  => __( 'Una vez al mes' )
     );
     $schedules['weekly'] = array(
-        'interval' => 604800, // 7 días en segundos
+        'interval' => 604800,
         'display'  => __( 'Una vez a la semana' )
     );
     return $schedules;
@@ -33,10 +38,8 @@ add_filter( 'cron_schedules', 'adp_add_cron_intervals' );
  */
 function adp_activate_plugin() {
     ADP_Activator::activate();
-    // Limpieza preventiva del sistema antiguo
+    // Limpieza preventiva
     wp_clear_scheduled_hook( 'adp_send_notification_cron' );
-    
-    // Action Scheduler crea sus propias tablas automáticamente al cargarse
 }
 register_activation_hook( __FILE__, 'adp_activate_plugin' );
 
@@ -47,7 +50,6 @@ register_deactivation_hook( __FILE__, 'adp_deactivate_plugin' );
 
 /**
  * Inicialización del sistema.
- * Inyección de dependencias manual.
  */
 function adp_run_plugin() {
     $db = new ADP_DB();
