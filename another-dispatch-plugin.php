@@ -2,8 +2,16 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Zumito
+ */
+
+/**
+ * Para refrescar el autoupload
+ * composer dump-autoload 
+ * 
+ * Por si se instala por primera vez
+ * composer install
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
