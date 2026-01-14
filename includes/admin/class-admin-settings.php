@@ -18,7 +18,7 @@ class ADP_Admin_Settings {
      * Registra los grupos de configuraciones.
      */
     public function register() {
-        // Grupo: Ajustes Generales y SMTP
+        // --- Grupo 1: Ajustes Generales y SMTP ---
         $general_args = array( 'sanitize_callback' => 'sanitize_text_field' );
         
         register_setting( 'adp_plugin_settings', 'adp_delivery_frequency', $general_args );
@@ -33,11 +33,15 @@ class ADP_Admin_Settings {
         register_setting( 'adp_plugin_settings', 'adp_smtp_user', $general_args );
         register_setting( 'adp_plugin_settings', 'adp_smtp_pass', $general_args );
 
-        // Grupo: Customizer (Visual)
+
+        // --- Grupo 2: Customizer (Visual) ---
+        // IMPORTANTE: El nombre del grupo debe ser 'adp_customizer_settings' para coincidir con settings_fields()
         $color_args = array( 'sanitize_callback' => 'sanitize_hex_color' );
         
+        // Colores (Coincidiendo con email-styles.php)
         register_setting( 'adp_customizer_settings', 'adp_color_header_bg', $color_args );
         register_setting( 'adp_customizer_settings', 'adp_color_header_text', $color_args );
+        register_setting( 'adp_customizer_settings', 'adp_body_bg', $color_args );
         register_setting( 'adp_customizer_settings', 'adp_color_btn_bg', $color_args );
         register_setting( 'adp_customizer_settings', 'adp_color_btn_text', $color_args );
         register_setting( 'adp_customizer_settings', 'adp_color_links', $color_args );

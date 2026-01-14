@@ -1,111 +1,71 @@
-/**
- * Archivo: assets/js/admin-customizer.js
- * Descripción: Lógica para el Customizer de Emails (Nativo & Switcher).
- */
-
 jQuery(document).ready(function($) {
     
-    // =========================================================
-    // 1. MANEJO DE COLORES (Nativo HTML5)
-    // =========================================================
+    // 1. Colores Nativos & CSS Vars
     $('.adp-color-native').on('input change', function() {
         var color = $(this).val();
         var cssVar = $(this).data('css-var');
-        
-        // Actualizar Variable CSS del Simulador
         $('#adp-email-simulator').css(cssVar, color);
+        
+        // Reforzar actualización del botón simulado si cambia el header
+        if(cssVar === '--adp-email-header-bg') {
+            $('.adp-sim-btn').css('background-color', color);
+        }
+        if(cssVar === '--adp-email-header-text') {
+            $('.adp-sim-btn').css('color', color);
+        }
     });
 
-    // =========================================================
-    // 2. LIVE PREVIEW FOOTER
-    // =========================================================
+    // 2. Footer Texto Live
     $('#adp_footer_text').on('input', function() {
-        var text = $(this).val();
-        $('#adp-sim-footer-content').html(text);
+        $('#adp-sim-footer-content').html($(this).val());
     });
 
-    // =========================================================
-    // 3. SWITCHER DE VISTAS (Single vs Digest)
-    // =========================================================
-    
-    // Plantillas simuladas (Strings HTML)
+    // 3. Switcher de Vistas (Digest / Single)
     const templates = {
         single: `
             <div class="adp-sim-post-single">
-                <div class="adp-sim-thumb" style="background-color: #eee; height: 150px; width: 100%; display: flex; align-items: center; justify-content: center; color: #999; margin-bottom: 20px;">
+                <div style="background-color: #eee; height: 150px; width: 100%; display: flex; align-items: center; justify-content: center; color: #999; margin-bottom: 20px;">
                     <span>Imagen Destacada</span>
                 </div>
-                <h3 style="margin-top: 0; color: #222;">Actualización Importante: Nueva Versión 2.0</h3>
+                <h3 style="margin-top: 0; color: #222;">Nueva Actualización Disponible</h3>
                 <p>Hola <strong>Suscriptor</strong>,</p>
-                <p>Acabamos de lanzar una gran actualización en nuestro proyecto. Hemos añadido nuevas mecánicas de juego y corregido varios bugs reportados por la comunidad.</p>
-                <p>Haz clic en el botón de abajo para leer la nota completa del parche.</p>
-                
+                <p>Hemos publicado un nuevo artículo que podría interesarte. Haz clic abajo para leerlo completo.</p>
                 <div style="text-align: center; margin-top: 25px;">
-                    <a href="#" class="adp-sim-btn">Leer en la web</a>
+                    <a href="#" class="adp-sim-btn" style="background-color: var(--adp-email-header-bg); color: var(--adp-email-header-text);">Leer en la web</a>
                 </div>
             </div>
         `,
         digest: `
             <div class="adp-sim-digest-list">
-                <p style="margin-bottom: 20px;">Aquí tienes el resumen de lo que pasó esta semana:</p>
-                
-                <div class="adp-sim-post-item" style="border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0;"><a href="#" style="color: #2271b1; text-decoration: none;">Análisis del Mercado 2026</a></h4>
-                    <p style="font-size: 14px; color: #666; margin: 0 0 10px;">Un vistazo profundo a las tendencias económicas que se avecinan para el próximo año fiscal...</p>
-                    <a href="#" style="font-size: 13px; font-weight: bold; color: #2271b1;">Leer más &rarr;</a>
+                <p style="margin-bottom: 20px;">Resumen de la semana:</p>
+                <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 5px 0; color: #2271b1;">Tendencias 2026</h4>
+                    <p style="font-size: 13px; color: #666; margin: 0;">Análisis detallado...</p>
                 </div>
-
-                <div class="adp-sim-post-item" style="border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0;"><a href="#" style="color: #2271b1; text-decoration: none;">Guía de Optimización WP</a></h4>
-                    <p style="font-size: 14px; color: #666; margin: 0 0 10px;">Aprende a mejorar el rendimiento de tu sitio web con estos simples consejos de caché...</p>
-                    <a href="#" style="font-size: 13px; font-weight: bold; color: #2271b1;">Leer más &rarr;</a>
-                </div>
-
-                <div class="adp-sim-post-item">
-                    <h4 style="margin: 0 0 10px 0;"><a href="#" style="color: #2271b1; text-decoration: none;">Entrevista con el CEO</a></h4>
-                    <p style="font-size: 14px; color: #666; margin: 0 0 10px;">Conversamos sobre el futuro de la inteligencia artificial y su impacto en el desarrollo...</p>
-                    <a href="#" style="font-size: 13px; font-weight: bold; color: #2271b1;">Leer más &rarr;</a>
+                <div style="padding-bottom: 15px;">
+                    <h4 style="margin: 0 0 5px 0; color: #2271b1;">Tutorial WordPress</h4>
+                    <p style="font-size: 13px; color: #666; margin: 0;">Cómo optimizar tu sitio...</p>
                 </div>
             </div>
         `
     };
 
     function updatePreviewMode(mode) {
-        var contentArea = $('#adp-sim-content-area');
-        var titleArea = $('#adp-sim-main-title');
+        var content = (mode === 'digest') ? templates.digest : templates.single;
+        var title = (mode === 'digest') ? 'Resumen Semanal' : 'Nueva Publicación';
         
-        // 1. Cambiar Contenido
-        if (mode === 'digest') {
-            contentArea.html(templates.digest);
-            titleArea.text('Resumen Semanal');
-        } else {
-            contentArea.html(templates.single);
-            titleArea.text('Nueva Publicación');
-        }
-
-        // 2. Re-aplicar colores dinámicos a elementos inyectados si es necesario
-        // (En este CSS usamos variables CSS heredadas, así que es automático)
-        
-        // Pero el botón usa el color de header como fondo, necesitamos forzarlo si se inyecta de nuevo
-        // Esto es un "hack" porque el botón en Single usa estilos inline simulados con la variable CSS
-        $('.adp-sim-btn').css({
-            'background-color': 'var(--adp-email-header-bg)',
-            'color': 'var(--adp-email-header-text)'
-        });
+        $('#adp-sim-content-area').html(content);
+        $('#adp-sim-main-title').text(title);
     }
 
-    // Listener de Radio Buttons
     $('input[name="adp_preview_mode"]').on('change', function() {
         updatePreviewMode($(this).val());
     });
-
-    // Inicializar
+    
+    // Iniciar en modo single
     updatePreviewMode('single');
 
-
-    // =========================================================
-    // 4. LOGO UPLOAD (WP Media)
-    // =========================================================
+    // 4. Logo Upload (Corregido IDs)
     var mediaUploader;
     $('#adp-upload-logo-btn').on('click', function(e) {
         e.preventDefault();
@@ -119,27 +79,21 @@ jQuery(document).ready(function($) {
 
         mediaUploader.on('select', function() {
             var attachment = mediaUploader.state().get('selection').first().toJSON();
-            $('#adp_email_logo').val(attachment.url);
-            
-            // UI Admin
+            // CORRECCIÓN: ID actualizado a adp_logo_url
+            $('#adp_logo_url').val(attachment.url);
             $('#adp-logo-preview-wrapper').html('<img src="' + attachment.url + '" id="adp-logo-img">');
             $('#adp-remove-logo-btn').removeClass('hidden');
-
-            // UI Simulator
-            var simLogoArea = $('.adp-sim-logo-area');
-            if (simLogoArea.find('img').length > 0) {
-                simLogoArea.find('img').attr('src', attachment.url);
-            } else {
-                simLogoArea.html('<img src="' + attachment.url + '" class="adp-sim-logo-img">');
-            }
+            
+            // Actualizar simulador
+            $('.adp-sim-logo-area').html('<img src="' + attachment.url + '" class="adp-sim-logo-img">');
         });
         mediaUploader.open();
     });
 
     $('#adp-remove-logo-btn').on('click', function(e) {
         e.preventDefault();
-        $('#adp_email_logo').val('');
-        $('#adp-logo-preview-wrapper').html('<span class="adp-no-logo-text">Sin logo seleccionado</span>');
+        $('#adp_logo_url').val('');
+        $('#adp-logo-preview-wrapper').html('<span class="adp-no-logo-text">Sin logo</span>');
         $('.adp-sim-logo-area').empty();
         $(this).addClass('hidden');
     });
