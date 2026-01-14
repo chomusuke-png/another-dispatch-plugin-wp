@@ -1,6 +1,32 @@
-/* Estilos Generales Compartidos */
+/**
+ * Archivo: assets/css/admin/main.css
+ * Descripción: Estilos globales, variables CSS y componentes compartidos del plugin.
+ * Versión: 1.0.0
+ */
+
+:root {
+    /* Paleta de Colores - Integrada con WP Admin */
+    --adp-primary: #2271b1;
+    --adp-primary-hover: #135e96;
+    --adp-text-main: #1d2327;
+    --adp-text-secondary: #50575e;
+    --adp-bg-light: #f0f0f1;
+    --adp-bg-white: #ffffff;
+    --adp-border: #dcdcde;
+
+    /* Estados */
+    --adp-success: #00a32a;
+    --adp-warning: #dba617;
+    --adp-danger: #d63638;
+
+    /* Espaciado y Layout */
+    --adp-radius: 4px;
+    --adp-spacing-unit: 20px;
+}
+
+/* --- Contenedores Generales --- */
 .adp-wrap {
-    margin: 20px 0;
+    margin: var(--adp-spacing-unit) 0;
 }
 
 .adp-header-actions {
@@ -9,7 +35,48 @@
     margin-bottom: 15px;
 }
 
-/* Utilidad para ocultar cosas visualmente */
+/* --- Componentes: Tarjetas (Stat Cards) --- */
+/* Se mueve aquí porque podría usarse en otras pantallas */
+.adp-stat-card {
+    background: var(--adp-bg-white);
+    border: 1px solid var(--adp-border);
+    border-left: 4px solid var(--adp-primary);
+    border-radius: var(--adp-radius);
+    padding: var(--adp-spacing-unit);
+    margin-bottom: 20px;
+}
+
+.adp-stat-number {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--adp-text-main);
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.adp-stat-label {
+    color: var(--adp-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Variaciones de Estado --- */
+.adp-stat-card.active { border-left-color: var(--adp-success); }
+.adp-stat-card.active .adp-stat-number { color: var(--adp-success); }
+
+.adp-stat-card.pending { border-left-color: var(--adp-warning); }
+.adp-stat-card.pending .adp-stat-number { color: var(--adp-warning); }
+
+/* --- Utilidades --- */
 .adp-hidden {
     display: none !important;
+}
+
+.adp-flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

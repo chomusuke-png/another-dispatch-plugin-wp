@@ -1,110 +1,117 @@
-/* Layout Principal (2 Columnas) */
+/**
+ * Archivo: assets/css/admin/customizer.css
+ * Descripción: Estilos para la interfaz de diseño de emails.
+ * Dependencias: main.css
+ */
+
+/* --- Layout Principal --- */
 .adp-customizer-grid {
     display: flex;
-    gap: 30px;
+    gap: var(--adp-spacing-unit);
     align-items: flex-start;
+    margin-top: var(--adp-spacing-unit);
 }
 
+/* Columna Izquierda: Controles */
 .adp-controls-pane {
-    flex: 1;
+    flex: 0 0 350px; /* Ancho fijo óptimo para controles */
     min-width: 300px;
-    max-width: 450px;
 }
 
+/* Columna Derecha: Previsualización */
 .adp-preview-pane {
-    flex: 2;
-    background: #f0f0f1;
-    border: 1px solid #ccd0d4;
+    flex: 1;
+    background: var(--adp-bg-light);
+    border: 1px solid var(--adp-border);
     padding: 40px;
-    border-radius: 4px;
+    border-radius: var(--adp-radius);
+    position: relative;
 }
 
-/* Área de Upload de Logo */
+/* Responsive: Colapsar en móviles */
+@media (max-width: 960px) {
+    .adp-customizer-grid {
+        flex-direction: column;
+    }
+    
+    .adp-controls-pane, 
+    .adp-preview-pane {
+        width: 100%;
+        flex: none;
+    }
+
+    .adp-preview-pane {
+        padding: 20px; /* Menos padding en móvil */
+    }
+}
+
+/* --- Upload de Logo --- */
 .adp-logo-uploader-area {
     background: #f9f9f9;
     padding: 15px;
     border: 1px dashed #ccc;
     text-align: center;
-    border-radius: 4px;
+    border-radius: var(--adp-radius);
+    margin-bottom: 15px;
 }
 
-/* Simulación del Email (Preview) */
+.adp-logo-preview-container {
+    margin-bottom: 10px;
+    border: 1px solid var(--adp-border);
+    padding: 5px;
+    background: #fff;
+    display: inline-block;
+}
+
+/* --- Simulador de Email (Preview Wrapper) --- */
+.adp-sticky-preview {
+    position: sticky;
+    top: 50px;
+}
+
 .adp-fake-email-wrapper {
-    background: #fff; /* Fondo del "cliente de correo" */
-    padding: 20px;
-    border: 1px solid #ddd;
-}
-
-.adp-fake-email {
-    background: #ffffff;
+    background: #fff;
+    padding: 0; /* El padding lo maneja el contenido del email */
+    border: 1px solid var(--adp-border);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
     max-width: 600px;
     margin: 0 auto;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    border-radius: 4px;
+    border-radius: var(--adp-radius);
     overflow: hidden;
 }
 
-/* Sticky Preview (Para que te siga al hacer scroll) */
-.adp-sticky-preview {
-    position: sticky;
-    top: 50px;
+/* Header del Email Falso */
+.adp-fake-email-header {
+    padding: 30px 20px;
+    text-align: center;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Responsive */
-@media (max-width: 960px) {
-    .adp-customizer-grid {
-        flex-direction: column;
-    }
-    .adp-controls-pane, .adp-preview-pane {
-        width: 100%;
-        max-width: 100%;
-    }
-}
-
-
-
-/* Customizer Grid Layout */
-.adp-customizer-grid {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
-}
-
-.adp-controls-pane {
-    flex: 1;
-    min-width: 300px;
-    max-width: 450px;
-}
-
-.adp-preview-pane {
-    flex: 2;
-    background: #f0f0f1;
-    border: 1px solid #ccd0d4;
-    padding: 40px;
-    border-radius: 4px;
-}
-
-.adp-fake-email {
+/* Cuerpo del Email Falso */
+.adp-fake-email-body {
+    padding: 30px;
     background: #ffffff;
-    max-width: 600px;
-    margin: 0 auto;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    color: #333;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.adp-fake-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
     border-radius: 4px;
-    overflow: hidden; /* Para que el header bg no se salga */
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background 0.3s ease;
 }
 
-/* Sticky Preview */
-.adp-sticky-preview {
-    position: sticky;
-    top: 50px;
-}
-
-@media (max-width: 960px) {
-    .adp-customizer-grid {
-        flex-direction: column;
-    }
-    .adp-controls-pane, .adp-preview-pane {
-        width: 100%;
-        max-width: 100%;
-    }
+/* Footer del Email Falso */
+.adp-fake-email-footer {
+    background: #f6f6f6;
+    padding: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    border-top: 1px solid #eee;
 }

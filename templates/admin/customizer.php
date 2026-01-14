@@ -14,7 +14,7 @@ $footer_text = get_option('adp_footer_text', 'Enviado con amor desde ' . get_blo
 ?>
 
 <div class="wrap">
-    <h1>🎨 Diseño del Correo</h1>
+    <h1>Diseño del Correo</h1>
     <hr class="wp-header-end">
 
     <?php if ( isset( $message ) ) : ?>
