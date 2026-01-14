@@ -13,23 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'ADP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ADP_URL', plugin_dir_url( __FILE__ ) );
 
-// Carga Action Scheduler
-$as_path = ADP_PATH . 'includes/lib/action-scheduler/action-scheduler.php';
-if ( file_exists( $as_path ) ) {
-    require_once $as_path;
-}
-
-// Carga de dependencias
-require_once ADP_PATH . 'includes/admin/class-admin-manager.php';
-require_once ADP_PATH . 'includes/core/class-activator.php';
-require_once ADP_PATH . 'includes/core/class-db.php';
-require_once ADP_PATH . 'includes/emails/class-email-sender.php';
-require_once ADP_PATH . 'includes/emails/class-post-watcher.php';
-require_once ADP_PATH . 'includes/emails/class-smtp-config.php';
-require_once ADP_PATH . 'includes/public/class-shortcode.php';
-require_once ADP_PATH . 'includes/public/class-subscribe.php';
-require_once ADP_PATH . 'includes/public/class-unsubscribe.php';
-require_once ADP_PATH . 'includes/public/class-widget.php';
+require_once ADP_PATH . 'vendor/autoload.php';
 
 function adp_add_cron_intervals( $schedules ) {
     $schedules['monthly'] = array(
