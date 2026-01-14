@@ -1,7 +1,38 @@
-/**
- * Estilos para el panel de administración de ADP
- * Version: 2.1 - Corrección de Radio Buttons y Layout
- */
+/* Tarjetas de Estadísticas */
+.adp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.adp-stat-card {
+    background: #fff;
+    padding: 20px;
+    border-left: 4px solid #2271b1;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.adp-stat-card h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #1d2327;
+}
+
+.adp-stat-card .adp-stat-number {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2271b1;
+    display: block;
+    margin-top: 10px;
+}
+
+/* Variaciones de color por estado */
+.adp-stat-card.active { border-color: #00a32a; }
+.adp-stat-card.active .adp-stat-number { color: #00a32a; }
+
+.adp-stat-card.pending { border-color: #dba617; }
+.adp-stat-card.pending .adp-stat-number { color: #dba617; }
 
 /* --- Layout Principal (Grid System) --- */
 .adp-dashboard-wrapper {
@@ -73,6 +104,11 @@
 .adp-dashboard-wrapper .inside {
     padding: 20px;
 }
+
+
+
+
+
 
 /* --- Formularios --- */
 
@@ -176,50 +212,4 @@
     font-size: 18px;
     width: 18px;
     height: 18px;
-}
-
-/* Customizer Grid Layout */
-.adp-customizer-grid {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
-}
-
-.adp-controls-pane {
-    flex: 1;
-    min-width: 300px;
-    max-width: 450px;
-}
-
-.adp-preview-pane {
-    flex: 2;
-    background: #f0f0f1;
-    border: 1px solid #ccd0d4;
-    padding: 40px;
-    border-radius: 4px;
-}
-
-.adp-fake-email {
-    background: #ffffff;
-    max-width: 600px;
-    margin: 0 auto;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    overflow: hidden; /* Para que el header bg no se salga */
-}
-
-/* Sticky Preview */
-.adp-sticky-preview {
-    position: sticky;
-    top: 50px;
-}
-
-@media (max-width: 960px) {
-    .adp-customizer-grid {
-        flex-direction: column;
-    }
-    .adp-controls-pane, .adp-preview-pane {
-        width: 100%;
-        max-width: 100%;
-    }
 }

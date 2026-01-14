@@ -17,26 +17,44 @@ class ADP_Admin {
     }
 
     public function enqueue_assets( $hook ) {
-        // AÑADIR 'adp-settings' a la lista permitida
+        // 1. Verificación rápida: Si no es nuestra página, salir.
+        // Nota: Los hooks de submenu suelen tener el formato "toplevel_page_slug" o "dispatch_page_slug"
         if ( strpos( $hook, 'another-dispatch-plugin' ) === false && 
-             strpos( $hook, 'adp-customizer' ) === false && 
-             strpos( $hook, 'adp-debug' ) === false &&
-             strpos( $hook, 'adp-settings' ) === false ) {
+             strpos( $hook, 'adp-' ) === false ) {
             return;
         }
-        
-        wp_enqueue_style( 'adp-admin-css', ADP_URL . 'assets/css/admin-style.css', array(), '2.3.1' );
 
-        // SOLO en la página del Customizer cargamos lo necesario para medios y colores
+        $version = '2.4.0'; // Incrementa versión para romper caché
+
+        // 2. Estilos Globales (Main) - Se carga en todas las pantallas del plugin
+        wp_enqueue_style( 'adp-main-css', ADP_URL . 'assets/css/admin/main.css', array(), $version );
+
+        // 3. Carga Condicional Modular (CSS Específico)
         if ( strpos( $hook, 'adp-customizer' ) !== false ) {
+            
+            // Módulo Customizer
+            wp_enqueue_style( 'adp-customizer-css', ADP_URL . 'assets/css/admin/customizer.css', array( 'adp-main-css', 'wp-color-picker' ), $version );
+            
+            // Dependencias de JS específicas
             wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
-            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery', 'wp-color-picker' ), '1.1.0', true );
+            
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery', 'wp-color-picker' ), $version, true );
+
+        } elseif ( strpos( $hook, 'adp-debug' ) !== false ) {
+            
+            // Módulo Debug
+            wp_enqueue_style( 'adp-debug-css', ADP_URL . 'assets/css/admin/debug.css', array( 'adp-main-css' ), $version );
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery' ), $version, true );
+
         } else {
-            // En otras páginas cargamos el JS normal sin dependencias extra
-            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery' ), '1.1.0', true );
+            
+            // Módulo Dashboard (Por defecto en la home del plugin)
+            wp_enqueue_style( 'adp-dashboard-css', ADP_URL . 'assets/css/admin/dashboard.css', array( 'adp-main-css' ), $version );
+            wp_enqueue_script( 'adp-admin-js', ADP_URL . 'assets/js/admin-script.js', array( 'jquery' ), $version, true );
         }
 
+        // 4. Variables JS Globales
         wp_localize_script( 'adp-admin-js', 'adp_vars', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'adp_debug_refresh_nonce' ),

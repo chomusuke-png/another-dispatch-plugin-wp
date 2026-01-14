@@ -1,0 +1,15 @@
+/* Estilos Generales Compartidos */
+.adp-wrap {
+    margin: 20px 0;
+}
+
+.adp-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+/* Utilidad para ocultar cosas visualmente */
+.adp-hidden {
+    display: none !important;
+}
