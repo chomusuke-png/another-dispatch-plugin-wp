@@ -25,7 +25,7 @@ class ADP_Admin_Assets {
             return;
         }
 
-        $version = '2.5.0';
+        $version = '2.6.0'; // Incrementamos versión
         $url     = ADP_URL;
 
         // Estilos Globales
@@ -52,10 +52,13 @@ class ADP_Admin_Assets {
      * Assets para el personalizador.
      */
     private function enqueue_customizer_assets( $url, $version ) {
-        wp_enqueue_style( 'adp-customizer-css', $url . 'assets/css/admin/customizer.css', array( 'adp-main-css', 'wp-color-picker' ), $version );
+        // Eliminamos dependencia de wp-color-picker
+        wp_enqueue_style( 'adp-customizer-css', $url . 'assets/css/admin/customizer.css', array( 'adp-main-css' ), $version );
         wp_enqueue_media();
-        wp_enqueue_style( 'wp-color-picker' );
-        wp_enqueue_script( 'adp-customizer-js', $url . 'assets/js/admin-customizer.js', array( 'jquery', 'wp-color-picker' ), $version, false );
+        
+        // Script del customizer
+        wp_enqueue_script( 'adp-customizer-js', $url . 'assets/js/admin-customizer.js', array( 'jquery' ), $version, false );
+        
         // Registramos el script genérico también para localizars vars si fuera necesario
         wp_register_script( 'adp-admin-js', '', array(), $version ); 
     }

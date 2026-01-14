@@ -2,12 +2,11 @@
 /**
  * Archivo: templates/admin/customizer.php
  * Descripción: Interfaz de administración para personalizar el diseño de los emails.
- * Incluye controles de formulario y un área de previsualización en vivo.
  *
  * @var array $settings Valores actuales de las opciones guardadas en base de datos.
  */
 
-// Recuperamos las opciones actuales (con fallbacks por defecto)
+// Recuperamos las opciones actuales
 $logo_url      = get_option( 'adp_email_logo', '' );
 $header_bg     = get_option( 'adp_header_bg', '#2271b1' );
 $header_text   = get_option( 'adp_header_text_color', '#ffffff' );
@@ -20,7 +19,6 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
     
     <form method="post" action="options.php" class="adp-customizer-form">
         <?php
-            // Campos de seguridad y secciones de configuración de WP
             settings_fields( 'adp_email_settings_group' ); 
             do_settings_sections( 'adp_email_settings_group' );
         ?>
@@ -60,19 +58,27 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
                 <div class="adp-control-section">
                     <h2 class="adp-section-title"><?php echo esc_html__( 'Colores', 'another-dispatch-plugin' ); ?></h2>
 
-                    <div class="adp-form-group">
-                        <label class="adp-label" for="adp_header_bg"><?php echo esc_html__( 'Fondo del Encabezado', 'another-dispatch-plugin' ); ?></label>
-                        <input type="text" name="adp_header_bg" id="adp_header_bg" value="<?php echo esc_attr( $header_bg ); ?>" class="adp-color-field" data-css-var="--adp-email-header-bg">
-                    </div>
+                    <div class="adp-color-grid">
+                        <div class="adp-form-group-color">
+                            <label class="adp-label-small" for="adp_header_bg">Header Fondo</label>
+                            <div class="adp-color-input-wrapper">
+                                <input type="color" name="adp_header_bg" id="adp_header_bg" value="<?php echo esc_attr( $header_bg ); ?>" class="adp-color-native" data-css-var="--adp-email-header-bg">
+                            </div>
+                        </div>
 
-                    <div class="adp-form-group">
-                        <label class="adp-label" for="adp_header_text_color"><?php echo esc_html__( 'Texto del Encabezado', 'another-dispatch-plugin' ); ?></label>
-                        <input type="text" name="adp_header_text_color" id="adp_header_text_color" value="<?php echo esc_attr( $header_text ); ?>" class="adp-color-field" data-css-var="--adp-email-header-text">
-                    </div>
+                        <div class="adp-form-group-color">
+                            <label class="adp-label-small" for="adp_header_text_color">Header Texto</label>
+                            <div class="adp-color-input-wrapper">
+                                <input type="color" name="adp_header_text_color" id="adp_header_text_color" value="<?php echo esc_attr( $header_text ); ?>" class="adp-color-native" data-css-var="--adp-email-header-text">
+                            </div>
+                        </div>
 
-                    <div class="adp-form-group">
-                        <label class="adp-label" for="adp_body_bg"><?php echo esc_html__( 'Fondo General', 'another-dispatch-plugin' ); ?></label>
-                        <input type="text" name="adp_body_bg" id="adp_body_bg" value="<?php echo esc_attr( $body_bg ); ?>" class="adp-color-field" data-css-var="--adp-email-body-bg">
+                        <div class="adp-form-group-color">
+                            <label class="adp-label-small" for="adp_body_bg">Fondo Email</label>
+                            <div class="adp-color-input-wrapper">
+                                <input type="color" name="adp_body_bg" id="adp_body_bg" value="<?php echo esc_attr( $body_bg ); ?>" class="adp-color-native" data-css-var="--adp-email-body-bg">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -89,9 +95,25 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
                     <?php submit_button( __( 'Guardar Cambios', 'another-dispatch-plugin' ), 'primary', 'submit', false ); ?>
                 </div>
 
-            </div> <div class="adp-preview-pane">
+            </div> 
+            
+            <div class="adp-preview-pane">
                 <div class="adp-sticky-wrapper">
-                    <h3 class="adp-preview-title"><?php echo esc_html__( 'Vista Previa en Vivo', 'another-dispatch-plugin' ); ?></h3>
+                    
+                    <div class="adp-preview-header-bar">
+                        <h3 class="adp-preview-title"><?php echo esc_html__( 'Vista Previa', 'another-dispatch-plugin' ); ?></h3>
+                        
+                        <div class="adp-view-switch">
+                            <label>
+                                <input type="radio" name="adp_preview_mode" value="single" checked>
+                                <span>Single</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="adp_preview_mode" value="digest">
+                                <span>Digest</span>
+                            </label>
+                        </div>
+                    </div>
                     
                     <div class="adp-email-simulator" id="adp-email-simulator" style="
                         --adp-email-header-bg: <?php echo esc_attr($header_bg); ?>;
@@ -104,16 +126,11 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
                                     <img src="<?php echo esc_url( $logo_url ); ?>" alt="Logo" class="adp-sim-logo-img">
                                 <?php endif; ?>
                             </div>
-                            <h2 class="adp-sim-title">Confirmación de Suscripción</h2>
+                            <h2 class="adp-sim-title" id="adp-sim-main-title">Confirmación</h2>
                         </div>
-
-                        <div class="adp-sim-body">
-                            <p>Hola <strong>Usuario</strong>,</p>
-                            <p>Gracias por suscribirte a nuestras alertas. Este es un ejemplo de cómo se verán tus correos electrónicos con la configuración actual.</p>
-                            <p>Por favor, haz clic en el botón de abajo para confirmar:</p>
-                            
-                            <a href="#" class="adp-sim-btn" style="background: var(--adp-email-header-bg); color: var(--adp-email-header-text);">Confirmar Email</a>
-                        </div>
+                        
+                        <div class="adp-sim-body" id="adp-sim-content-area">
+                            </div>
 
                         <div class="adp-sim-footer">
                             <span id="adp-sim-footer-content"><?php echo wp_kses_post( $footer_text ); ?></span>
@@ -122,6 +139,7 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
                         </div>
                     </div>
                 </div>
-            </div> </div>
+            </div> 
+        </div>
     </form>
 </div>
