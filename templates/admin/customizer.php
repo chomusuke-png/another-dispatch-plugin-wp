@@ -103,31 +103,31 @@ $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los d
                         </div>
                     </div>
                     
-                    <div class="adp-email-simulator" id="adp-email-simulator" style="
-                        --adp-email-header-bg: <?php echo esc_attr($header_bg); ?>;
-                        --adp-email-header-text: <?php echo esc_attr($header_text); ?>;
-                        --adp-email-body-bg: <?php echo esc_attr($body_bg); ?>;
-                    ">
-                        <div class="adp-sim-header">
-                            <div class="adp-sim-logo-area">
-                                <?php if ( ! empty( $logo_url ) ) : ?>
-                                    <img src="<?php echo esc_url( $logo_url ); ?>" alt="Logo" class="adp-sim-logo-img">
-                                <?php endif; ?>
-                            </div>
-                            <h2 class="adp-sim-title" id="adp-sim-main-title">Confirmación</h2>
-                        </div>
+                    <div class="adp-email-simulator" id="adp-email-simulator">
                         
-                        <div class="adp-sim-body" id="adp-sim-content-area">
-                            </div>
+                        <?php 
+                        $is_preview = true; 
+                        include ADP_PATH . 'templates/emails/email-styles.php'; 
+                        ?>
 
-                        <div class="adp-sim-footer">
-                            <span id="adp-sim-footer-content"><?php echo wp_kses_post( $footer_text ); ?></span>
-                            <br>
-                            <small><a href="#">Darse de baja</a></small>
+                        <div id="adp-sim-content-area">
+                            <?php
+                                // Mock data inicial para Single
+                                $post_title = 'Bienvenido a nuestro Newsletter';
+                                $post_content = '<p>Este es un ejemplo de cómo se verán tus correos.</p><p>Puedes personalizar los colores...</p>';
+                                $post_link = '#';
+                                $featured_image = ''; 
+                                $unsubscribe_link = '#';
+                                $blog_name = get_bloginfo('name');
+                                
+                                include ADP_PATH . 'templates/emails/single.php';
+                            ?>
                         </div>
+
                     </div>
+                    
                 </div>
-            </div> 
+            </div>
         </div>
     </form>
 </div>

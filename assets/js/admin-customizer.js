@@ -1,71 +1,96 @@
 jQuery(document).ready(function($) {
     
-    // 1. Colores Nativos & CSS Vars
+    // --- 1. Live Preview de Colores (Variables CSS) ---
     $('.adp-color-native').on('input change', function() {
         var color = $(this).val();
-        var cssVar = $(this).data('css-var');
+        var cssVar = $(this).data('css-var'); // Ej: --adp-header-bg
+        
+        // Aplicamos la variable al contenedor padre (.adp-email-simulator)
+        // Así, cualquier HTML que carguemos por AJAX heredará estos colores automáticamente.
         $('#adp-email-simulator').css(cssVar, color);
-        
-        // Reforzar actualización del botón simulado si cambia el header
-        if(cssVar === '--adp-email-header-bg') {
-            $('.adp-sim-btn').css('background-color', color);
-        }
-        if(cssVar === '--adp-email-header-text') {
-            $('.adp-sim-btn').css('color', color);
-        }
     });
 
-    // 2. Footer Texto Live
+    // --- 2. Live Preview Texto Footer ---
     $('#adp_footer_text').on('input', function() {
-        $('#adp-sim-footer-content').html($(this).val());
+        var text = $(this).val();
+        // Buscamos dentro del simulador
+        $('#adp-email-simulator').find('.footer p:first-child').html(text);
     });
 
-    // 3. Switcher de Vistas (Digest / Single)
-    const templates = {
-        single: `
-            <div class="adp-sim-post-single">
-                <div style="background-color: #eee; height: 150px; width: 100%; display: flex; align-items: center; justify-content: center; color: #999; margin-bottom: 20px;">
-                    <span>Imagen Destacada</span>
-                </div>
-                <h3 style="margin-top: 0; color: #222;">Nueva Actualización Disponible</h3>
-                <p>Hola <strong>Suscriptor</strong>,</p>
-                <p>Hemos publicado un nuevo artículo que podría interesarte. Haz clic abajo para leerlo completo.</p>
-                <div style="text-align: center; margin-top: 25px;">
-                    <a href="#" class="adp-sim-btn" style="background-color: var(--adp-email-header-bg); color: var(--adp-email-header-text);">Leer en la web</a>
-                </div>
-            </div>
-        `,
-        digest: `
-            <div class="adp-sim-digest-list">
-                <p style="margin-bottom: 20px;">Resumen de la semana:</p>
-                <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 5px 0; color: #2271b1;">Tendencias 2026</h4>
-                    <p style="font-size: 13px; color: #666; margin: 0;">Análisis detallado...</p>
-                </div>
-                <div style="padding-bottom: 15px;">
-                    <h4 style="margin: 0 0 5px 0; color: #2271b1;">Tutorial WordPress</h4>
-                    <p style="font-size: 13px; color: #666; margin: 0;">Cómo optimizar tu sitio...</p>
-                </div>
-            </div>
-        `
-    };
+    // --- 3. Lógica de Cambio de Vista (AJAX) ---
+    $('input[name="adp_preview_mode"]').on('change', function() {
+        var mode = $(this).val();
+        var $container = $('#adp-sim-content-area'); // El área blanca del contenido
+        var $title = $('#adp-sim-main-title'); // El título principal (Confirmación, etc)
 
-    function updatePreviewMode(mode) {
-        var content = (mode === 'digest') ? templates.digest : templates.single;
-        var title = (mode === 'digest') ? 'Resumen Semanal' : 'Nueva Publicación';
+        $container.css('opacity', 0.5); // Feedback visual de carga
         
-        $('#adp-sim-content-area').html(content);
-        $('#adp-sim-main-title').text(title);
+        // Cambiamos el título visualmente rápido mientras carga el contenido
+        if(mode === 'digest') {
+            $title.text('Resumen Semanal');
+        } else {
+            $title.text('Nueva Publicación');
+        }
+
+        $.ajax({
+            url: adp_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'adp_render_preview',
+                nonce: adp_vars.nonce,
+                mode: mode
+            },
+            success: function(response) {
+                if(response.success) {
+                    // Inyectamos el HTML que viene de PHP (single.php o digest.php)
+                    $container.html(response.data.html);
+                }
+            },
+            error: function() {
+                $container.html('<p style="color:red; text-align:center;">Error al cargar la vista previa.</p>');
+            },
+            complete: function() {
+                $container.css('opacity', 1);
+            }
+        });
+    });
+
+    // --- 4. Gestión del Logo (Media Uploader) ---
+    
+    // Función auxiliar para actualizar la vista previa en el panel y en el simulador
+    function updateLogoInterface(url) {
+        if(url) {
+            // Panel de Control (Izquierda)
+            $('#adp-logo-preview-wrapper').html('<img src="' + url + '" id="adp-logo-img">');
+            $('#adp-remove-logo-btn').removeClass('hidden');
+            $('#adp_logo_url').val(url);
+
+            // Simulador (Derecha)
+            // Buscamos la imagen dentro del simulador. Si no existe el tag img, lo creamos.
+            var imgHtml = '<img src="' + url + '" class="adp-sim-logo-img" style="max-height:50px; margin:0 auto;">';
+            var $simHeaderLink = $('#adp-email-simulator .header h1 a');
+            
+            // Si el header tiene un link, metemos la imagen dentro.
+            if ($simHeaderLink.length) {
+                $simHeaderLink.html(imgHtml);
+            } else {
+                // Fallback por si la estructura cambia
+                $('.adp-sim-logo-area').html(imgHtml);
+            }
+
+        } else {
+            // Borrar Logo (Panel)
+            $('#adp-logo-preview-wrapper').html('<span class="adp-no-logo-text">Sin logo seleccionado</span>');
+            $('#adp-remove-logo-btn').addClass('hidden');
+            $('#adp_logo_url').val('');
+
+            // Borrar Logo (Simulador - volver al texto por defecto)
+            var blogName = adp_vars.blogname || 'Vista Previa'; 
+            $('#adp-email-simulator .header h1 a').text(blogName);
+        }
     }
 
-    $('input[name="adp_preview_mode"]').on('change', function() {
-        updatePreviewMode($(this).val());
-    });
-    
-    // Iniciar en modo single
-    updatePreviewMode('single');
-
-    // 4. Logo Upload (Corregido IDs)
+    // Botón Subir
     var mediaUploader;
     $('#adp-upload-logo-btn').on('click', function(e) {
         e.preventDefault();
@@ -79,23 +104,16 @@ jQuery(document).ready(function($) {
 
         mediaUploader.on('select', function() {
             var attachment = mediaUploader.state().get('selection').first().toJSON();
-            // CORRECCIÓN: ID actualizado a adp_logo_url
-            $('#adp_logo_url').val(attachment.url);
-            $('#adp-logo-preview-wrapper').html('<img src="' + attachment.url + '" id="adp-logo-img">');
-            $('#adp-remove-logo-btn').removeClass('hidden');
-            
-            // Actualizar simulador
-            $('.adp-sim-logo-area').html('<img src="' + attachment.url + '" class="adp-sim-logo-img">');
+            updateLogoInterface(attachment.url);
         });
+
         mediaUploader.open();
     });
 
+    // Botón Quitar
     $('#adp-remove-logo-btn').on('click', function(e) {
         e.preventDefault();
-        $('#adp_logo_url').val('');
-        $('#adp-logo-preview-wrapper').html('<span class="adp-no-logo-text">Sin logo</span>');
-        $('.adp-sim-logo-area').empty();
-        $(this).addClass('hidden');
+        updateLogoInterface(''); // Pasamos vacío para resetear
     });
 
 });
