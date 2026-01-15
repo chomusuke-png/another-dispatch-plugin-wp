@@ -1,7 +1,6 @@
 /**
  * Archivo: assets/css/admin/dashboard.css
- * Descripción: Estilos para la vista de resumen y gestión.
- * Cambios: Limpieza de transiciones y eliminación de sombras en cajas.
+ * Descripción: Estilos específicos para la vista de resumen y gestión.
  */
 
 /* --- Layout de Grid Principal --- */
@@ -19,32 +18,9 @@
     }
 }
 
-/* --- Postboxes (Cajas de WordPress) --- */
-.adp-dashboard-wrapper .postbox {
-    border: 1px solid var(--adp-border);
-    border-radius: var(--adp-radius);
-    margin-bottom: var(--adp-spacing-unit);
-    box-shadow: none; /* Asegura diseño plano */
-}
+/* Nota: Los estilos de .postbox se movieron a main.css */
 
-.adp-dashboard-wrapper .postbox-header {
-    border-bottom: 1px solid var(--adp-bg-light);
-    padding: 12px 15px;
-    border-radius: var(--adp-radius) var(--adp-radius) 0 0;
-}
-
-.adp-dashboard-wrapper .postbox-header h2 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0;
-    color: var(--adp-text-main);
-}
-
-.adp-dashboard-wrapper .inside {
-    padding: var(--adp-spacing-unit);
-}
-
-/* --- Formularios y Inputs --- */
+/* --- Formularios y Inputs del Dashboard --- */
 .adp-label-title {
     display: block;
     margin-bottom: 6px;
@@ -65,7 +41,7 @@
     border: 1px solid #8c8f94;
     width: 100%;
     box-sizing: border-box;
-    box-shadow: none; /* Sin sombras internas */
+    box-shadow: none;
 }
 
 /* Grupo de Radio Buttons */
@@ -119,7 +95,6 @@
     background: #f6f7f7;
     border-radius: var(--adp-radius);
     border: 1px solid var(--adp-border);
-    /* Solo transición de color, nada de movimiento */
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     display: inline-flex;
     align-items: center;

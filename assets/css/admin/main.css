@@ -1,7 +1,6 @@
 /**
  * Archivo: assets/css/admin/main.css
  * Descripción: Estilos globales, variables CSS y componentes compartidos.
- * Cambios: Eliminación de sombras y refinamiento de variables.
  */
 
 :root {
@@ -43,7 +42,6 @@
     border-radius: var(--adp-radius);
     padding: var(--adp-spacing-unit);
     margin-bottom: 20px;
-    /* Limpieza: Sin sombras */
     box-shadow: none; 
 }
 
@@ -70,6 +68,38 @@
 
 .adp-stat-card.pending { border-left-color: var(--adp-warning); }
 .adp-stat-card.pending .adp-stat-number { color: var(--adp-warning); }
+
+/* --- Postboxes Globales (Refactorizado) --- */
+/* Estos estilos ahora aplican a cualquier .postbox dentro de las páginas del plugin */
+
+.postbox {
+    border: 1px solid var(--adp-border);
+    border-radius: var(--adp-radius);
+    margin-bottom: var(--adp-spacing-unit);
+    box-shadow: none; /* Asegura diseño plano global */
+    background: #fff; /* Asegurar fondo blanco */
+}
+
+.postbox-header {
+    border-bottom: 1px solid var(--adp-bg-light);
+    padding: 12px 15px;
+    border-radius: var(--adp-radius) var(--adp-radius) 0 0;
+    background: transparent; /* Quitar fondo gris default de WP si se desea */
+}
+
+.postbox-header h2,
+.postbox-header h2.hndle {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--adp-text-main);
+    cursor: default; /* Quitar cursor pointer si no colapsan */
+}
+
+.inside {
+    padding: var(--adp-spacing-unit);
+    margin: 0; /* Reset margen WP */
+}
 
 /* --- Utilidades --- */
 .adp-hidden {

@@ -19,7 +19,7 @@
         <div class="adp-main-column">
             <div class="postbox">
                 <div class="postbox-header">
-                    <h2 class="hndle" style="display:inline-block; margin-right: 15px;">Listado de Emails</h2>
+                    <h2 class="hndle">Listado de Emails</h2>
                     
                     <form method="get" action="" style="display:inline-block;">
                         <input type="hidden" name="page" value="another-dispatch-plugin" />

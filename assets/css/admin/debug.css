@@ -1,0 +1,85 @@
+/**
+ * Archivo: assets/css/admin/debug.css
+ * Descripción: Estilos para la pantalla de diagnóstico.
+ */
+
+/* Encabezado con Switch de Estado */
+.adp-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Grid de KPIs (Tarjetas de estado) */
+.adp-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.adp-kpi-card {
+    text-align: center;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    /* Borde izquierdo se define por modificadores abajo */
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.adp-kpi-icon {
+    font-size: 30px;
+    height: 30px;
+    width: 30px;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+.adp-kpi-number {
+    margin: 5px 0;
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 400;
+    color: #1d2327;
+    transition: color 0.3s;
+}
+
+.adp-kpi-label {
+    margin: 0;
+    color: #646970;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Modificadores de Color KPI */
+.adp-kpi-card.pending { border-left: 4px solid #dba617; }
+.adp-kpi-card.pending .adp-kpi-icon { color: #dba617; }
+
+.adp-kpi-card.complete { border-left: 4px solid #00a32a; }
+.adp-kpi-card.complete .adp-kpi-icon { color: #00a32a; }
+
+.adp-kpi-card.failed { border-left: 4px solid #d63638; }
+.adp-kpi-card.failed .adp-kpi-icon { color: #d63638; }
+
+.adp-kpi-card.running { border-left: 4px solid #2271b1; }
+.adp-kpi-card.running .adp-kpi-icon { color: #2271b1; }
+
+/* Tabla de Logs */
+.adp-log-table td {
+    vertical-align: middle;
+}
+
+.adp-status-badge {
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.adp-status-badge.complete { color: #00a32a; background: #edfaef; }
+.adp-status-badge.failed   { color: #d63638; background: #fbeaea; }
+.adp-status-badge.pending  { color: #dba617; background: #fff8e5; }

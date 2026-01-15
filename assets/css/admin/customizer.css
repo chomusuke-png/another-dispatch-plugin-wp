@@ -1,52 +1,96 @@
 /**
  * Archivo: assets/css/admin/customizer.css
+ * Descripción: Estilos para la interfaz de personalización de correos.
  */
 
-/* --- Layout Grid --- */
+/* --- Layout Principal --- */
 .adp-customizer-grid {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     align-items: flex-start;
     margin-top: 20px;
 }
 
+/* Columna Izquierda: Controles */
 .adp-controls-pane {
-    flex: 0 0 320px;
+    flex: 0 0 350px; /* Ancho fijo para controles */
     min-width: 300px;
 }
 
+/* Columna Derecha: Previsualización */
 .adp-preview-pane {
     flex: 1;
-    min-width: 0;
+    min-width: 0; /* Evita desbordamiento en flex items */
 }
 
-/* --- Secciones --- */
-.adp-control-section {
-    background: #fff;
-    border: 1px solid #dcdcde;
-    padding: 20px;
+.adp-sticky-wrapper {
+    position: sticky;
+    top: 50px;
+}
+
+/* --- Ajustes para Postbox dentro del Customizer --- */
+/* Sobrescribimos márgenes para que encajen en el grid */
+.adp-controls-pane .postbox {
     margin-bottom: 20px;
 }
 
-.adp-section-title {
-    margin-top: 0;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f1;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #1d2327;
+.adp-controls-pane .inside {
+    padding: 15px;
+    margin: 0;
 }
 
-/* --- Color Picker Nativo Customizado --- */
+/* --- Color Picker Grid --- */
 .adp-color-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 15px;
 }
 
-/* --- View Switcher --- */
+.adp-form-group-color {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* --- Logo Uploader (FIX IMAGEN ROTA) --- */
+.adp-logo-uploader {
+    text-align: center;
+    padding: 15px;
+    background: #f6f7f7;
+    border: 1px dashed #c3c4c7;
+    border-radius: 4px;
+}
+
+.adp-logo-preview-wrapper {
+    margin-bottom: 15px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* REGLA CRÍTICA: Evita que la imagen rompa el contenedor */
+.adp-logo-preview-wrapper img {
+    max-width: 100%;
+    height: auto;
+    max-height: 150px; /* Límite de altura razonable */
+    display: block;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.adp-no-logo-text {
+    color: #a7aaad;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.adp-btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* --- View Switcher (Header de Preview) --- */
 .adp-preview-header-bar {
     display: flex;
     justify-content: space-between;
@@ -56,8 +100,8 @@
 
 .adp-preview-title {
     margin: 0;
-    font-size: 14px;
-    color: #646970;
+    font-size: 1.1em;
+    font-weight: 500;
 }
 
 .adp-view-switch {
@@ -71,6 +115,7 @@
 .adp-view-switch label {
     cursor: pointer;
     border-right: 1px solid #8c8f94;
+    margin: 0;
 }
 
 .adp-view-switch label:last-child {
@@ -78,7 +123,7 @@
 }
 
 .adp-view-switch input {
-    display: none; /* Ocultar radio real */
+    display: none;
 }
 
 .adp-view-switch span {
@@ -87,23 +132,24 @@
     font-size: 12px;
     background: #f6f7f7;
     color: #50575e;
-    transition: all 0.2s;
+    transition: background 0.2s;
 }
 
 .adp-view-switch input:checked + span {
     background: #2271b1;
     color: #fff;
-    font-weight: 600;
 }
 
-/* --- Simulador --- */
+/* --- Simulador de Email --- */
 .adp-email-simulator {
     background: var(--adp-email-body-bg, #f0f0f1);
     border: 1px solid #dcdcde;
-    max-width: 600px;
+    max-width: 100%; /* Ajuste responsive */
     margin: 0 auto;
     font-family: Helvetica, Arial, sans-serif;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .adp-sim-header {
@@ -114,34 +160,21 @@
 }
 
 .adp-sim-logo-img {
-    max-height: 50px;
+    max-width: 150px; /* Límite visual en el simulador */
+    height: auto;
     margin-bottom: 15px;
-}
-
-.adp-sim-title {
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
-    color: inherit;
+    display: inline-block;
 }
 
 .adp-sim-body {
     background: #ffffff;
-    padding: 40px;
+    padding: 30px;
     color: #3c434a;
     line-height: 1.6;
-    font-size: 16px;
+    font-size: 15px;
     margin: 20px;
     border-radius: 4px;
-}
-
-.adp-sim-btn {
-    display: inline-block;
-    padding: 12px 24px;
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 4px;
-    /* Colores definidos por JS usando variables */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .adp-sim-footer {
@@ -149,18 +182,5 @@
     text-align: center;
     font-size: 12px;
     color: #8c8f94;
-}
-
-/* Utilidades adicionales */
-.adp-logo-preview-wrapper img {
-    max-height: 80px;
-    display: block;
-    margin: 0 auto;
-}
-.hidden { display: none; }
-.adp-logo-uploader {
-    text-align: center;
-    padding: 15px;
-    background: #f0f0f1;
-    border-radius: 4px;
+    border-top: 1px solid #e0e0e0;
 }
