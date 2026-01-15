@@ -1,11 +1,15 @@
 <?php
 /**
- * Template: Plantilla para envío de resúmenes (Digest).
- * Soporta envíos Semanales y Mensuales.
+ * Template: Digest (Resumen Semanal)
+ * Actualizado para soportar el Customizer y variables del AJAX.
  */
 
 if ( ! isset( $is_preview ) ) {
     $is_preview = false;
+}
+
+if ( ! isset( $posts_list ) && isset( $posts ) ) {
+    $posts_list = $posts;
 }
 ?>
 
@@ -14,58 +18,69 @@ if ( ! isset( $is_preview ) ) {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title><?php echo esc_html( $email_title ); ?></title>
+    <title><?php echo esc_html( $email_title ?? 'Resumen Semanal' ); ?></title>
     <?php include ADP_PATH . 'templates/emails/email-styles.php'; ?>
 </head>
 <body>
 <?php endif; ?>
+
     <div class="adp-email-wrapper">
         <div class="wrapper">
             <div style="height: 40px;"></div>
             
             <div class="container">
+                
                 <div class="header">
-                    <h1><a href="<?php echo esc_url( home_url() ); ?>"><?php echo esc_html( $blog_name ); ?></a></h1>
+                    <h1>
+                        <a href="<?php echo esc_url( home_url() ); ?>">
+                            <?php 
+                            $logo = get_option('adp_logo_url');
+                            if ( ! empty( $logo ) ) {
+                                echo '<img src="' . esc_url( $logo ) . '" alt="' . esc_attr( get_bloginfo('name') ) . '" style="max-height:50px; margin:0 auto;">';
+                            } else {
+                                echo esc_html( get_bloginfo( 'name' ) );
+                            }
+                            ?>
+                        </a>
+                    </h1>
                 </div>
-    
+
                 <div class="email-meta">
-                    <?php echo esc_html( $email_title ); ?>
+                    <?php echo esc_html( $email_title ?? 'Resumen Semanal' ); ?>
                 </div>
-    
+
                 <div class="content-body">
                     <?php if ( ! empty( $posts_list ) ) : ?>
-                        <?php foreach ( $posts_list as $post ) : ?>
-                            <?php 
-                                $link  = get_permalink( $post->ID );
-                                $thumb = get_the_post_thumbnail_url( $post->ID, 'medium_large' ); 
-                            ?>
+                        <?php foreach ( $posts_list as $post ) : 
+                            $p_id = is_object($post) ? $post->ID : $post['ID'];
+                            $p_title = is_object($post) ? $post->post_title : $post['post_title'];
+                            $p_excerpt = is_object($post) ? $post->post_excerpt : $post['post_excerpt'];
+                            $p_link = get_permalink( $p_id );
+                        ?>
                             <div class="post-item">
-                                <?php if ( $thumb ) : ?>
-                                    <a href="<?php echo esc_url( $link ); ?>">
-                                        <img src="<?php echo esc_url( $thumb ); ?>" class="post-thumb" alt="<?php echo esc_attr( $post->post_title ); ?>">
-                                    </a>
-                                <?php endif; ?>
-                                
                                 <h2 class="post-title">
-                                    <a href="<?php echo esc_url( $link ); ?>"><?php echo esc_html( $post->post_title ); ?></a>
+                                    <a href="<?php echo esc_url( $p_link ); ?>">
+                                        <?php echo esc_html( $p_title ); ?>
+                                    </a>
                                 </h2>
                                 
                                 <div class="post-excerpt">
-                                    <?php echo get_the_excerpt( $post ); ?>
+                                    <?php echo wp_kses_post( $p_excerpt ); ?>
                                 </div>
                                 
-                                <a href="<?php echo esc_url( $link ); ?>" class="btn-link">Leer artículo completo &rarr;</a>
+                                <a href="<?php echo esc_url( $p_link ); ?>" class="btn-link">Leer más &rarr;</a>
                             </div>
                         <?php endforeach; ?>
                     <?php else : ?>
-                        <p style="text-align: center;">No hubo publicaciones nuevas en este periodo.</p>
+                        <p>No hay publicaciones nuevas en este periodo.</p>
                     <?php endif; ?>
                 </div>
-            </div>
-    
-            <div class="footer">
-                <p><?php echo wp_kses_post( get_option( 'adp_footer_text', '© ' . date('Y') . ' Todos los derechos reservados.' ) ); ?></p>
-                <p><a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja</a></p>
+
+                <div class="footer">
+                    <p><?php echo wp_kses_post( get_option( 'adp_footer_text', '© ' . date('Y') . ' Todos los derechos reservados.' ) ); ?></p>
+                    <p><a href="<?php echo esc_url( $unsubscribe_link ?? '#' ); ?>">Darse de baja</a></p>
+                </div>
+
             </div>
         </div>
     </div>
