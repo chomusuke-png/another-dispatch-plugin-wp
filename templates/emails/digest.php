@@ -64,7 +64,7 @@ if ( ! isset( $is_preview ) ) {
             </div>
     
             <div class="footer">
-                <p>Este es tu resumen de actualizaciones de <strong><?php echo esc_html( $blog_name ); ?></strong>.</p>
+                <p><?php echo wp_kses_post( get_option( 'adp_footer_text', '© ' . date('Y') . ' Todos los derechos reservados.' ) ); ?></p>
                 <p><a href="<?php echo esc_url( $unsubscribe_link ); ?>">Darse de baja</a></p>
             </div>
         </div>
