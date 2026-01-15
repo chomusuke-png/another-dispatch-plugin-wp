@@ -56,11 +56,9 @@ class ADP_Admin_Assets {
         wp_enqueue_style( 'adp-customizer-css', $url . 'assets/css/admin/customizer.css', array( 'adp-main-css' ), $version );
         wp_enqueue_media();
         
-        // Script del customizer
-        wp_enqueue_script( 'adp-customizer-js', $url . 'assets/js/admin-customizer.js', array( 'jquery' ), $version, false );
-        
-        // Registramos el script genérico también para localizars vars si fuera necesario
+        // Registramos primero el script base que lleva las vars
         wp_register_script( 'adp-admin-js', '', array(), $version ); 
+        wp_enqueue_script( 'adp-customizer-js', $url . 'assets/js/admin-customizer.js', array( 'jquery', 'adp-admin-js' ), $version, false );
     }
 
     /**

@@ -9,6 +9,9 @@ $logo_url      = get_option( 'adp_logo_url', '' );
 $header_bg     = get_option( 'adp_color_header_bg', '#2271b1' );
 $header_text   = get_option( 'adp_color_header_text', '#ffffff' );
 $body_bg       = get_option( 'adp_body_bg', '#f0f0f1' );
+$btn_bg        = get_option( 'adp_color_btn_bg', '#2271b1' );
+$btn_text      = get_option( 'adp_color_btn_text', '#ffffff' );
+$link_color    = get_option( 'adp_color_links', '#2271b1' );
 $footer_text   = get_option( 'adp_footer_text', '© 2025 Tu Empresa. Todos los derechos reservados.' );
 ?>
 

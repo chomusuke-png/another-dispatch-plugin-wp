@@ -23,18 +23,26 @@ class ADP_Admin_Ajax {
 
         $mode = isset( $_POST['mode'] ) ? sanitize_text_field( $_POST['mode'] ) : 'single';
         
-        // Datos Mock (Falsos) para la previsualización
         $blog_name = get_bloginfo( 'name' );
-        $is_preview = true; // CRÍTICO: Activa el modo "sin <html>"
+        $is_preview = true;
 
         ob_start();
 
         if ( 'digest' === $mode ) {
             $email_title = 'Resumen Semanal';
-            // Creamos un array de objetos falsos para simular posts
             $posts_list = array(
-                (object) array( 'ID' => 0, 'post_title' => 'Cómo optimizar WordPress en 2026', 'post_excerpt' => 'Descubre las nuevas técnicas de caché...' ),
-                (object) array( 'ID' => 0, 'post_title' => 'Tendencias de Diseño Web', 'post_excerpt' => 'El minimalismo extremo vuelve a estar de moda...' ),
+                (object) array( 
+                    'ID' => 0, 
+                    'post_title' => 'Cómo optimizar WordPress en 2026', 
+                    'post_excerpt' => 'Descubre las nuevas técnicas de caché...',
+                    'mock_link' => '#'
+                ),
+                (object) array( 
+                    'ID' => 0, 
+                    'post_title' => 'Tendencias de Diseño Web', 
+                    'post_excerpt' => 'El minimalismo extremo vuelve a estar de moda...',
+                    'mock_link' => '#'
+                ),
             );
             $unsubscribe_link = '#';
             
@@ -45,7 +53,7 @@ class ADP_Admin_Ajax {
             $post_title = 'Bienvenido a nuestro Newsletter';
             $post_content = '<p>Este es un ejemplo de cómo se verán tus correos.</p><p>Puedes personalizar los colores, el logo y el pie de página desde el panel de la izquierda. Los cambios se reflejan en tiempo real.</p>';
             $post_link = '#';
-            $featured_image = ''; // Opcional: poner una URL de placeholder
+            $featured_image = '';
             $unsubscribe_link = '#';
 
             include ADP_PATH . 'templates/emails/single.php';
