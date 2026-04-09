@@ -2,7 +2,6 @@
 
 /**
  * Class ADP_DB
- * Abstracción optimizada para interactuar con la base de datos.
  */
 class ADP_DB {
 
@@ -13,9 +12,6 @@ class ADP_DB {
         $this->table_name = $wpdb->prefix . 'adp_subscribers';
     }
 
-    /**
-     * Helper privado para generar cláusulas WHERE seguras.
-     */
     private function build_status_where( $status ) {
         global $wpdb;
         if ( 'all' === $status ) {
@@ -41,7 +37,6 @@ class ADP_DB {
 
     public function activate_subscriber( $email, $hash ) {
         global $wpdb;
-        // Optimizamos seleccionando solo ID, es más rápido que *
         $id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$this->table_name} WHERE email = %s AND activation_hash = %s AND status = 'pending'", $email, $hash ) );
 
         if ( ! $id ) return false;
@@ -103,29 +98,42 @@ class ADP_DB {
 
     public function bulk_insert( $emails ) {
         global $wpdb;
-        if ( empty( $emails ) ) return 0;
 
-        $values = array();
-        $now = current_time( 'mysql' );
-        
-        foreach ( $emails as $email ) {
-            $safe_email = sanitize_email( $email );
-            if ( is_email( $safe_email ) ) {
-                $safe_email = esc_sql( $safe_email ); 
-                $values[] = "('$safe_email', 'active', '$now')"; 
-            }
+        if ( empty( $emails ) ) {
+            return 0;
         }
 
-        if ( empty( $values ) ) return 0;
+        $now            = current_time( 'mysql' );
+        $placeholders   = array();
+        $values         = array();
 
-        $values_str = implode( ', ', $values );
-        // INSERT IGNORE es más eficiente que verificar uno por uno
-        return (int) $wpdb->query( "INSERT IGNORE INTO {$this->table_name} (email, status, created_at) VALUES $values_str" );
+        foreach ( $emails as $email ) {
+            $clean = sanitize_email( $email );
+
+            if ( ! is_email( $clean ) ) {
+                continue;
+            }
+
+            $placeholders[] = "(%s, 'active', %s)";
+            $values[]       = $clean;
+            $values[]       = $now;
+        }
+
+        if ( empty( $placeholders ) ) {
+            return 0;
+        }
+
+        $sql = $wpdb->prepare(
+            "INSERT IGNORE INTO {$this->table_name} (email, status, created_at) VALUES "
+            . implode( ', ', $placeholders ),
+            $values
+        );
+
+        return (int) $wpdb->query( $sql );
     }
     
     public function get_all_subscribers_for_export() {
         global $wpdb;
-        // Solo traemos columnas necesarias para el CSV
         return $wpdb->get_results( "SELECT email, status, created_at FROM {$this->table_name}", ARRAY_A );
     }
 }
