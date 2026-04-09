@@ -2,15 +2,14 @@
 /**
  * Plugin Name: Another Dispatch Plugin
  * Description: Sistema modular de suscripción.
- * Version: 1.4.5
+ * Version: 1.4.6
  * Author: Zumito
  */
 
 /**
  * Para refrescar el autoupload
  * composer dump-autoload 
- * 
- * Por si se instala por primera vez
+ * * Por si se instala por primera vez
  * composer install
  */
 
@@ -41,24 +40,18 @@ function adp_add_cron_intervals( $schedules ) {
 }
 add_filter( 'cron_schedules', 'adp_add_cron_intervals' );
 
-/**
- * Activación y limpieza.
- */
 function adp_activate_plugin() {
     ADP_Activator::activate();
-    // Limpieza preventiva
     wp_clear_scheduled_hook( 'adp_send_notification_cron' );
 }
 register_activation_hook( __FILE__, 'adp_activate_plugin' );
 
 function adp_deactivate_plugin() {
     wp_clear_scheduled_hook( 'adp_monthly_digest_event' );
+    wp_clear_scheduled_hook( 'adp_daily_cleanup_event' );
 }
 register_deactivation_hook( __FILE__, 'adp_deactivate_plugin' );
 
-/**
- * Inicialización del sistema.
- */
 function adp_run_plugin() {
     $db = new ADP_DB();
 
@@ -66,6 +59,7 @@ function adp_run_plugin() {
         new ADP_Admin( $db );
     }
 
+    new ADP_Cleanup( $db );
     new ADP_Shortcode();
     new ADP_Subscribe_Handler( $db );
     new ADP_Unsubscribe_Handler( $db );

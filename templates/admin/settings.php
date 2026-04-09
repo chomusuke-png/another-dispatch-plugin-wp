@@ -107,6 +107,18 @@
                     </div>
                 </div>
 
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Limpieza Automática</h2></div>
+                    <div class="inside">
+                        <p class="description" style="margin-bottom: 15px; font-style: italic;">Elimina suscripciones pendientes antiguas.</p>
+                        <p>
+                            <label class="adp-label-title">Días para expirar pendientes:</label>
+                            <input type="number" name="adp_pending_expiration_days" value="<?php echo esc_attr( get_option( 'adp_pending_expiration_days', 0 ) ); ?>" class="widefat" min="0">
+                            <span class="description" style="display:block; margin-top:5px; font-size: 12px;">Ingresa 0 para desactivar la limpieza. Por ejemplo, con el valor 7 se eliminarán los correos no verificados tras una semana.</span>
+                        </p>
+                    </div>
+                </div>
+
             </div>
 
         </div>

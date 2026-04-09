@@ -7,8 +7,8 @@ $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
 
 wp_clear_scheduled_hook( 'adp_send_notification_cron' );
 wp_clear_scheduled_hook( 'adp_monthly_digest_event' );
+wp_clear_scheduled_hook( 'adp_daily_cleanup_event' );
 
-// Limpiar tareas de Action Scheduler
 if ( function_exists( 'as_unschedule_all_actions' ) ) {
     as_unschedule_all_actions( '', array(), 'adp_emails' );
 }

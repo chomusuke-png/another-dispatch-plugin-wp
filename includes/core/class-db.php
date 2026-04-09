@@ -1,8 +1,5 @@
 <?php
 
-/**
- * Class ADP_DB
- */
 class ADP_DB {
 
     private $table_name;
@@ -135,5 +132,24 @@ class ADP_DB {
     public function get_all_subscribers_for_export() {
         global $wpdb;
         return $wpdb->get_results( "SELECT email, status, created_at FROM {$this->table_name}", ARRAY_A );
+    }
+
+    public function delete_expired_pending_subscribers( int $days_threshold ): int {
+        global $wpdb;
+
+        if ( $days_threshold <= 0 ) {
+            return 0;
+        }
+
+        $cutoff_date = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days_threshold} days" ) );
+
+        $sql = $wpdb->prepare(
+            "DELETE FROM {$this->table_name} WHERE status = 'pending' AND created_at < %s",
+            $cutoff_date
+        );
+
+        $deleted_rows = $wpdb->query( $sql );
+
+        return is_numeric( $deleted_rows ) ? (int) $deleted_rows : 0;
     }
 }
