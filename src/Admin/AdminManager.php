@@ -74,10 +74,23 @@ class AdminManager
 
         $currentFilter = isset($_GET['adp_filter']) ? sanitize_text_field(wp_unslash($_GET['adp_filter'])) : 'all';
         
-        $subscribers  = $this->database->getSubscribers(0, 0, $currentFilter);
+        $perPage = 20;
+        $currentPage = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($currentPage - 1) * $perPage;
+        
+        $subscribers  = $this->database->getSubscribers($perPage, $offset, $currentFilter);
         $countTotal   = $this->database->getSubscriberCount('all');
         $countActive  = $this->database->getSubscriberCount('active');
         $countPending = $this->database->getSubscriberCount('pending');
+
+        $totalItems = $countTotal;
+        if ($currentFilter === 'active') {
+            $totalItems = $countActive;
+        } elseif ($currentFilter === 'pending') {
+            $totalItems = $countPending;
+        }
+
+        $totalPages = (int) ceil($totalItems / $perPage);
 
         $message = '';
         $messageType = 'success';

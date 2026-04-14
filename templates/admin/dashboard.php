@@ -80,6 +80,27 @@ if (!defined('ABSPATH')) {
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+
+                        <?php if (isset($totalPages) && $totalPages > 1) : ?>
+                            <div class="tablenav bottom">
+                                <div class="tablenav-pages">
+                                    <span class="displaying-num"><?php echo esc_html((string)$totalItems); ?> elementos</span>
+                                    <span class="pagination-links">
+                                        <?php
+                                        echo paginate_links([
+                                            'base'      => add_query_arg('paged', '%#%'),
+                                            'format'    => '',
+                                            'prev_text' => '&laquo;',
+                                            'next_text' => '&raquo;',
+                                            'total'     => $totalPages,
+                                            'current'   => $currentPage,
+                                        ]);
+                                        ?>
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                     <?php else : ?>
                         <div style="padding: 20px; text-align: center; color: #666;">
                             <span class="dashicons dashicons-groups" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block; width: 100%;"></span>
