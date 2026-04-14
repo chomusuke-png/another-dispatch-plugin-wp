@@ -38,7 +38,8 @@ class EmailSender
         $featuredImage = has_post_thumbnail($post->ID) ? get_the_post_thumbnail_url($post->ID, 'large') : '';
 
         foreach ($subscribers as $subscriber) {
-            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $subscriber->hash);
+            $hash = isset($subscriber->hash) ? (string) $subscriber->hash : '';
+            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $hash);
             
             $htmlContent = $this->renderTemplate('single', [
                 'postTitle'       => get_the_title($post->ID),
@@ -95,7 +96,8 @@ class EmailSender
         }
 
         foreach ($subscribers as $subscriber) {
-            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $subscriber->hash);
+            $hash = isset($subscriber->hash) ? (string) $subscriber->hash : '';
+            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $hash);
             
             $htmlContent = $this->renderTemplate('digest', [
                 'emailTitle'      => 'Resumen de Artículos - ' . get_bloginfo('name'),
