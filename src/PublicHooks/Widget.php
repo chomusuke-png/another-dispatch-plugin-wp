@@ -12,7 +12,7 @@ class Widget extends WP_Widget
     {
         parent::__construct(
             'adp_subscription_widget',
-            'ADP Boletín',
+            'ADP Newsletter',
             ['description' => 'Muestra un formulario de suscripción para Another Dispatch Plugin.']
         );
 
