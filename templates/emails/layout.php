@@ -2,18 +2,25 @@
 /**
  * Template: Layout Maestro de Correo.
  */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-if ( ! isset( $is_preview ) ) $is_preview = false;
-$blog_name = get_bloginfo( 'name' );
+if (!isset($isPreview)) {
+    $isPreview = false;
+}
+
+$blogName = $blogName ?? get_bloginfo('name');
+$emailTitle = $emailTitle ?? 'Notificación';
 ?>
 
-<?php if ( ! $is_preview ) : ?>
+<?php if (!$isPreview) : ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title><?php echo esc_html( $email_title ?? $blog_name ); ?></title>
-    <?php include ADP_PATH . 'templates/emails/email-styles.php'; ?>
+    <title><?php echo esc_html($emailTitle); ?></title>
+    <?php require ADP_PATH . 'templates/emails/email-styles.php'; ?>
 </head>
 <body>
 <?php endif; ?>
@@ -25,13 +32,13 @@ $blog_name = get_bloginfo( 'name' );
             <div class="container">
                 <div class="header">
                     <h1>
-                        <a href="<?php echo esc_url( home_url() ); ?>">
+                        <a href="<?php echo esc_url(home_url()); ?>">
                             <?php 
-                            $logo = get_option('adp_logo_url');
-                            if ( ! empty( $logo ) ) {
-                                echo '<img src="' . esc_url( $logo ) . '" alt="' . esc_attr( $blog_name ) . '" style="max-height:50px; margin:0 auto;">';
+                            $logoUrl = get_option('adp_logo_url');
+                            if (!empty($logoUrl)) {
+                                echo '<img src="' . esc_url($logoUrl) . '" alt="' . esc_attr($blogName) . '" style="max-height:50px; margin:0 auto;">';
                             } else {
-                                echo esc_html( $blog_name );
+                                echo esc_html($blogName);
                             }
                             ?>
                         </a>
@@ -39,22 +46,24 @@ $blog_name = get_bloginfo( 'name' );
                 </div>
 
                 <div class="email-meta">
-                    <?php echo esc_html( $email_title ?? 'Nueva Publicación' ); ?>
+                    <?php echo esc_html($emailTitle); ?>
                 </div>
 
                 <div class="content-body">
-                    <?php echo $email_content; ?>
+                    <?php echo $emailContent ?? ''; ?>
                 </div>
 
                 <div class="footer">
-                    <p><?php echo wp_kses_post( get_option( 'adp_footer_text', '© ' . date('Y') . ' Todos los derechos reservados.' ) ); ?></p>
-                    <p><a href="<?php echo esc_url( $unsubscribe_link ?? '#' ); ?>">Darse de baja de la lista</a></p>
+                    <p><?php echo wp_kses_post(get_option('adp_footer_text', '© ' . gmdate('Y') . ' Todos los derechos reservados.')); ?></p>
+                    <?php if (!empty($unsubscribeLink) && $unsubscribeLink !== '#') : ?>
+                        <p><a href="<?php echo esc_url($unsubscribeLink); ?>">Darse de baja de la lista</a></p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 
-<?php if ( ! $is_preview ) : ?>
+<?php if (!$isPreview) : ?>
 </body>
 </html>
 <?php endif; ?>

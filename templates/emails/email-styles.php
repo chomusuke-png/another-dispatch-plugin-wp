@@ -3,35 +3,36 @@
  * Partial: Estilos CSS dinámicos y estructura base.
  * Soporta CSS Variables para Live Preview y Hex para clientes de correo antiguos.
  */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-// 1. Definimos los valores por defecto (PHP)
-$bg_header = get_option( 'adp_color_header_bg', '#2271b1' );
-$txt_header= get_option( 'adp_color_header_text', '#ffffff' );
-$bg_body   = get_option( 'adp_body_bg', '#f0f0f1' );
-$bg_btn    = get_option( 'adp_color_btn_bg', '#2271b1' );
-$txt_btn   = get_option( 'adp_color_btn_text', '#ffffff' );
-$col_link  = get_option( 'adp_color_links', '#2271b1' );
+$bgHeader  = get_option('adp_color_header_bg', '#2271b1');
+$txtHeader = get_option('adp_color_header_text', '#ffffff');
+$bgBody    = get_option('adp_body_bg', '#f0f0f1');
+$bgBtn     = get_option('adp_color_btn_bg', '#2271b1');
+$txtBtn    = get_option('adp_color_btn_text', '#ffffff');
+$colLink   = get_option('adp_color_links', '#2271b1');
 
-// 2. Definimos el selector raíz. En preview es el wrapper, en email real es body.
-$root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' : 'body';
+$rootSelector = (isset($isPreview) && $isPreview) ? '.adp-email-wrapper' : 'body';
 ?>
 <style>
     /* --- Variables CSS (Solo para navegadores modernos y Preview) --- */
     .adp-email-wrapper {
-        --adp-header-bg: <?php echo esc_attr( $bg_header ); ?>;
-        --adp-header-text: <?php echo esc_attr( $txt_header ); ?>;
-        --adp-body-bg: <?php echo esc_attr( $bg_body ); ?>;
-        --adp-btn-bg: <?php echo esc_attr( $bg_btn ); ?>;
-        --adp-btn-text: <?php echo esc_attr( $txt_btn ); ?>;
-        --adp-link-color: <?php echo esc_attr( $col_link ); ?>;
+        --adp-header-bg: <?php echo esc_attr($bgHeader); ?>;
+        --adp-header-text: <?php echo esc_attr($txtHeader); ?>;
+        --adp-body-bg: <?php echo esc_attr($bgBody); ?>;
+        --adp-btn-bg: <?php echo esc_attr($bgBtn); ?>;
+        --adp-btn-text: <?php echo esc_attr($txtBtn); ?>;
+        --adp-link-color: <?php echo esc_attr($colLink); ?>;
     }
 
     /* --- Reset & Base --- */
-    <?php echo $root_selector; ?> {
+    <?php echo $rootSelector; ?> {
         margin: 0; 
         padding: 0; 
-        background-color: <?php echo esc_attr( $bg_body ); ?>; 
-        background-color: var(--adp-body-bg, <?php echo esc_attr( $bg_body ); ?>);
+        background-color: <?php echo esc_attr($bgBody); ?>; 
+        background-color: var(--adp-body-bg, <?php echo esc_attr($bgBody); ?>);
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
         color: #555555; 
         line-height: 1.6; 
@@ -41,8 +42,8 @@ $root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' 
     
     /* --- Enlaces --- */
     .adp-email-wrapper a { 
-        color: <?php echo esc_attr( $col_link ); ?>; 
-        color: var(--adp-link-color, <?php echo esc_attr( $col_link ); ?>);
+        color: <?php echo esc_attr($colLink); ?>; 
+        color: var(--adp-link-color, <?php echo esc_attr($colLink); ?>);
         text-decoration: none; 
     }
     
@@ -60,8 +61,8 @@ $root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' 
     
     /* --- Header --- */
     .header { 
-        background-color: <?php echo esc_attr( $bg_header ); ?>; 
-        background-color: var(--adp-header-bg, <?php echo esc_attr( $bg_header ); ?>);
+        background-color: <?php echo esc_attr($bgHeader); ?>; 
+        background-color: var(--adp-header-bg, <?php echo esc_attr($bgHeader); ?>);
         padding: 30px 20px; 
         text-align: center; 
     }
@@ -75,8 +76,8 @@ $root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' 
     }
     
     .header h1, .header h1 a {
-        color: <?php echo esc_attr( $txt_header ); ?>; 
-        color: var(--adp-header-text, <?php echo esc_attr( $txt_header ); ?>);
+        color: <?php echo esc_attr($txtHeader); ?>; 
+        color: var(--adp-header-text, <?php echo esc_attr($txtHeader); ?>);
         text-decoration: none;
     }
 
@@ -114,11 +115,11 @@ $root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' 
         margin-top: 10px; 
         text-decoration: none;
         
-        background-color: <?php echo esc_attr( $bg_btn ); ?>; 
-        background-color: var(--adp-btn-bg, <?php echo esc_attr( $bg_btn ); ?>);
+        background-color: <?php echo esc_attr($bgBtn); ?>; 
+        background-color: var(--adp-btn-bg, <?php echo esc_attr($bgBtn); ?>);
         
-        color: <?php echo esc_attr( $txt_btn ); ?> !important; 
-        color: var(--adp-btn-text, <?php echo esc_attr( $txt_btn ); ?>) !important;
+        color: <?php echo esc_attr($txtBtn); ?> !important; 
+        color: var(--adp-btn-text, <?php echo esc_attr($txtBtn); ?>) !important;
     }
     
     .btn-link { 
@@ -127,15 +128,15 @@ $root_selector = ( isset( $is_preview ) && $is_preview ) ? '.adp-email-wrapper' 
         font-weight: bold; 
         margin-top: 5px;
         
-        color: <?php echo esc_attr( $col_link ); ?>; 
-        color: var(--adp-link-color, <?php echo esc_attr( $col_link ); ?>);
+        color: <?php echo esc_attr($colLink); ?>; 
+        color: var(--adp-link-color, <?php echo esc_attr($colLink); ?>);
     }
     .btn-link:hover { text-decoration: underline; }
 
     /* --- Footer --- */
     .footer { 
         background-color: #f4f4f4; /* Fallback */
-        background-color: var(--adp-body-bg, <?php echo esc_attr( $bg_body ); ?>); /* Se funde con el fondo */
+        background-color: var(--adp-body-bg, <?php echo esc_attr($bgBody); ?>);
         text-align: center; 
         padding: 20px; 
         font-size: 12px; 

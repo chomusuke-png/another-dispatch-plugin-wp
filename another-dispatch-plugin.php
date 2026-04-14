@@ -1,75 +1,104 @@
 <?php
 /**
- * Plugin Name: Another Dispatch Plugin
- * Description: Sistema modular de suscripción.
- * Version: 1.4.6
- * Author: Zumito
+ * Plugin Name: Another Dispatch Plugin Re
+ * Plugin URI:  https://github.com/chomusuke-png/another-dispatch-plugin-wp
+ * Description: Sistema moderno y escalable para envíos masivos y automatizados de correos electrónicos.
+ * Version:     2.6.0
+ * Author:      Zumito
+ * Text Domain: another-dispatch-plugin
+ *
+ * @package Zumito\ADP
  */
 
-/**
- * Para refrescar el autoupload
- * composer dump-autoload 
- * * Por si se instala por primera vez
- * composer install
- */
+declare(strict_types=1);
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
-define( 'ADP_PATH', plugin_dir_path( __FILE__ ) );
-define( 'ADP_URL', plugin_dir_url( __FILE__ ) );
+define('ADP_VERSION', '2.6.0');
+define('ADP_PATH', plugin_dir_path(__FILE__));
+define('ADP_URL', plugin_dir_url(__FILE__));
 
-require_once ADP_PATH . 'vendor/autoload.php';
+// 1. Validar e incluir el autoloader de Composer
+$composerAutoloader = ADP_PATH . 'vendor/autoload.php';
 
-$as_file = ADP_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
-if ( file_exists( $as_file ) ) {
-    require_once $as_file;
+if (!file_exists($composerAutoloader)) {
+    add_action('admin_notices', function (): void {
+        echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin Re:</strong> Faltan dependencias. Por favor ejecuta <code>composer install --no-dev -o</code> en el directorio del plugin.</p></div>';
+    });
+    return;
 }
 
-function adp_add_cron_intervals( $schedules ) {
-    $schedules['monthly'] = array(
-        'interval' => 2635200,
-        'display'  => __( 'Una vez al mes' )
-    );
-    $schedules['weekly'] = array(
-        'interval' => 604800,
-        'display'  => __( 'Una vez a la semana' )
-    );
-    return $schedules;
+require_once $composerAutoloader;
+
+// 2. Inicializar Action Scheduler desde el vendor (si está empaquetado con el plugin)
+$actionSchedulerBootstrap = ADP_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+if (file_exists($actionSchedulerBootstrap)) {
+    require_once $actionSchedulerBootstrap;
 }
-add_filter( 'cron_schedules', 'adp_add_cron_intervals' );
 
-function adp_activate_plugin() {
-    ADP_Activator::activate();
-    wp_clear_scheduled_hook( 'adp_send_notification_cron' );
-}
-register_activation_hook( __FILE__, 'adp_activate_plugin' );
+use Zumito\ADP\Core\Database;
+use Zumito\ADP\Core\Activator;
+use Zumito\ADP\Core\Cleanup;
 
-function adp_deactivate_plugin() {
-    wp_clear_scheduled_hook( 'adp_monthly_digest_event' );
-    wp_clear_scheduled_hook( 'adp_daily_cleanup_event' );
-}
-register_deactivation_hook( __FILE__, 'adp_deactivate_plugin' );
+use Zumito\ADP\Admin\AdminManager;
+use Zumito\ADP\Admin\AdminActions;
+use Zumito\ADP\Admin\AdminAjax;
+use Zumito\ADP\Admin\AdminAssets;
+use Zumito\ADP\Admin\AdminSettings;
 
-function adp_run_plugin() {
-    $db = new ADP_DB();
+use Zumito\ADP\Emails\SmtpConfig;
+use Zumito\ADP\Emails\PostWatcher;
+use Zumito\ADP\Emails\EmailSender;
 
-    if ( is_admin() ) {
-        new ADP_Admin( $db );
+use Zumito\ADP\PublicHooks\Shortcode;
+use Zumito\ADP\PublicHooks\SubscribeHandler;
+use Zumito\ADP\PublicHooks\UnsubscribeHandler;
+use Zumito\ADP\PublicHooks\Widget;
+
+// 3. Registro de Hooks de Activación
+register_activation_hook(__FILE__, [Activator::class, 'activate']);
+
+// 4. Inicializador Principal e Inyección de Dependencias
+add_action('plugins_loaded', function (): void {
+
+    // Validar que Action Scheduler esté disponible (ya sea global o desde nuestro vendor)
+    if (!function_exists('as_enqueue_async_action')) {
+        add_action('admin_notices', function (): void {
+            echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin Re:</strong> Este plugin requiere tener instalado y activo el motor <strong>Action Scheduler</strong> (incluido en WooCommerce o disponible como plugin independiente). Ocurrió un error al intentar cargarlo desde la carpeta vendor.</p></div>';
+        });
+        return;
     }
 
-    new ADP_Cleanup( $db );
-    new ADP_Shortcode();
-    new ADP_Subscribe_Handler( $db );
-    new ADP_Unsubscribe_Handler( $db );
+    try {
+        // Instanciar la capa de Base de Datos una única vez
+        $database = new Database();
 
-    new ADP_Post_Watcher();
-    new ADP_Email_Sender( $db );
-    new ADP_SMTP();
+        // Core / Mantenimiento
+        new Cleanup($database);
 
-    add_action( 'widgets_init', function() {
-        register_widget( 'ADP_Widget' );
-    });
-}
-add_action( 'plugins_loaded', 'adp_run_plugin' );
+        // Capa de Administración (Solo se carga en el backend)
+        if (is_admin()) {
+            new AdminManager($database);
+            new AdminActions($database);
+            new AdminAjax();
+            new AdminAssets();
+            new AdminSettings();
+        }
+
+        // Capa de Correos y Motor de Envíos
+        new SmtpConfig();
+        new PostWatcher();
+        new EmailSender($database);
+
+        // Capa Pública / Frontend
+        new Shortcode();
+        new SubscribeHandler($database);
+        new UnsubscribeHandler($database);
+        new Widget();
+
+    } catch (\Exception $exception) {
+        error_log('Another Dispatch Plugin Error de Inicialización: ' . $exception->getMessage());
+    }
+});

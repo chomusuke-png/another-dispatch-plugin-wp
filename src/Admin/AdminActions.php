@@ -1,0 +1,213 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Zumito\ADP\Admin;
+
+use Zumito\ADP\Core\Database;
+
+class AdminActions
+{
+    private Database $database;
+
+    public function __construct(Database $database)
+    {
+        $this->database = $database;
+        add_action('admin_init', [$this, 'handleRequests']);
+    }
+
+    public function handleRequests(): void
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $this->processCsvExport();
+        $this->processCsvImport();
+        $this->processSubscriberDeletion();
+        $this->processVerificationResend();
+        $this->processSmtpTest();
+        $this->processManualTrigger();
+    }
+
+    private function processCsvExport(): void
+    {
+        if (!isset($_POST['adp_action_export_csv'])) {
+            return;
+        }
+
+        check_admin_referer('adp_export_csv', 'adp_export_nonce');
+
+        $filename = 'adp-subscribers-' . gmdate('Y-m-d') . '.csv';
+        $subscribersData = $this->database->getAllSubscribersForExport();
+
+        if (ob_get_length() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $outputStream = fopen('php://output', 'w');
+        
+        if ($outputStream === false) {
+            wp_die('Error al generar el archivo de exportación.');
+        }
+
+        fputcsv($outputStream, ['Email', 'Estado', 'Fecha Suscripción']);
+
+        foreach ($subscribersData as $row) {
+            fputcsv($outputStream, $row);
+        }
+
+        fclose($outputStream);
+        exit;
+    }
+
+    private function processCsvImport(): void
+    {
+        if (!isset($_POST['adp_action_import_csv'])) {
+            return;
+        }
+
+        check_admin_referer('adp_import_csv', 'adp_import_nonce');
+
+        if (empty($_FILES['adp_import_file']['tmp_name'])) {
+            $this->redirectWithMessage('test_error');
+        }
+
+        $tmpName = sanitize_text_field(wp_unslash($_FILES['adp_import_file']['tmp_name']));
+        $fileStream = fopen($tmpName, 'r');
+        
+        if ($fileStream === false) {
+            $this->redirectWithMessage('test_error');
+        }
+
+        $validEmails = [];
+        while (($csvData = fgetcsv($fileStream, 1000, ',')) !== false) {
+            if (isset($csvData[0])) {
+                $email = sanitize_email($csvData[0]);
+                if (is_email($email)) {
+                    $validEmails[] = $email;
+                }
+            }
+        }
+        fclose($fileStream);
+
+        $totalImported = 0;
+        foreach (array_chunk($validEmails, 100) as $chunk) {
+            $totalImported += $this->database->bulkInsert($chunk);
+        }
+
+        $this->redirectWithMessage('imported', ['count' => $totalImported]);
+    }
+
+    private function processSubscriberDeletion(): void
+    {
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        $subscriberId = isset($_GET['subscriber_id']) ? intval($_GET['subscriber_id']) : 0;
+
+        if ($action === 'adp_delete_subscriber' && $subscriberId > 0) {
+            check_admin_referer('adp_delete_subscriber_action');
+            $this->database->deleteSubscriberById($subscriberId);
+            $this->redirectWithMessage('deleted');
+        }
+    }
+
+    private function processVerificationResend(): void
+    {
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        
+        if ($action === 'adp_resend_verification' && isset($_GET['email'])) {
+            check_admin_referer('adp_resend_action');
+            
+            $email = sanitize_email(wp_unslash($_GET['email']));
+            $subscriber = $this->database->getSubscriber($email);
+
+            if ($subscriber && $subscriber->status === 'pending') {
+                $newHash = md5($email . time() . wp_salt());
+                $this->database->updateSubscriberHash($email, $newHash);
+
+                if (function_exists('as_enqueue_async_action')) {
+                    as_enqueue_async_action(
+                        'adp_send_verification_email_event', 
+                        ['email' => $email, 'hash' => $newHash], 
+                        'adp_emails'
+                    );
+                }
+                $this->redirectWithMessage('resent_success');
+            }
+        }
+    }
+
+    private function processSmtpTest(): void
+    {
+        if (!isset($_POST['adp_test_email_submit'])) {
+            return;
+        }
+
+        check_admin_referer('adp_send_test_email', 'adp_test_email_nonce');
+
+        $currentUserEmail = wp_get_current_user()->user_email;
+        $subject = 'Prueba SMTP ADP';
+        $htmlMessage = '<h1>¡Funciona!</h1><p>Configuración correcta.</p>';
+        
+        $fromEmail = get_option('adp_sender_email') ?: get_option('admin_email');
+        $blogName = get_bloginfo('name');
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8', 
+            'From: ' . $blogName . ' <' . $fromEmail . '>'
+        ];
+        
+        $isSent = wp_mail($currentUserEmail, $subject, $htmlMessage, $headers);
+        $this->redirectWithMessage($isSent ? 'test_success' : 'test_error');
+    }
+
+    private function processManualTrigger(): void
+    {
+        if (!isset($_POST['adp_test_content_submit'])) {
+            return;
+        }
+
+        check_admin_referer('adp_test_content_action', 'adp_test_content_nonce');
+
+        if (!function_exists('as_schedule_single_action')) {
+            $this->redirectWithMessage('test_error');
+        }
+
+        $frequency = get_option('adp_delivery_frequency', 'instant');
+        $messageCode = 'no_posts';
+
+        if ($frequency === 'monthly') {
+            as_schedule_single_action(time(), 'adp_monthly_digest_event', [0], 'adp_emails');
+            $messageCode = 'digest_queued';
+        } elseif ($frequency === 'weekly') {
+            as_schedule_single_action(time(), 'adp_weekly_digest_event', [0], 'adp_emails');
+            $messageCode = 'digest_queued';
+        } else {
+            $latestPosts = get_posts(['numberposts' => 1, 'post_status' => 'publish']);
+            if (!empty($latestPosts)) {
+                as_schedule_single_action(
+                    time(), 
+                    'adp_process_batch_send', 
+                    ['post_id' => $latestPosts[0]->ID, 'offset' => 0], 
+                    'adp_emails'
+                );
+                $messageCode = 'instant_queued';
+            }
+        }
+
+        $this->redirectWithMessage($messageCode);
+    }
+
+    private function redirectWithMessage(string $messageCode, array $additionalArgs = []): void
+    {
+        $queryArguments = array_merge([
+            'page' => 'another-dispatch-plugin', 
+            'adp_msg' => $messageCode
+        ], $additionalArgs);
+        
+        wp_safe_redirect(add_query_arg($queryArguments, admin_url('admin.php')));
+        exit;
+    }
+}

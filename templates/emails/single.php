@@ -3,35 +3,36 @@
  * Template: Fragmento Single Post.
  * Genera el contenido y carga el layout maestro.
  */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-// 1. Capturamos el contenido específico
 ob_start(); 
 ?>
 
-<?php if ( ! empty( $featured_image ) ) : ?>
-    <a href="<?php echo esc_url( $post_link ?? '#' ); ?>">
-        <img src="<?php echo esc_url( $featured_image ); ?>" alt="<?php echo esc_attr( $post_title ?? '' ); ?>" class="post-thumb">
+<?php if (!empty($featuredImage)) : ?>
+    <a href="<?php echo esc_url($postLink ?? '#'); ?>">
+        <img src="<?php echo esc_url($featuredImage); ?>" alt="<?php echo esc_attr($postTitle ?? ''); ?>" class="post-thumb">
     </a>
 <?php endif; ?>
 
 <h2 class="post-title">
-    <a href="<?php echo esc_url( $post_link ?? '#' ); ?>"><?php echo esc_html( $post_title ?? 'Título del Post' ); ?></a>
+    <a href="<?php echo esc_url($postLink ?? '#'); ?>">
+        <?php echo esc_html($postTitle ?? 'Título del Post'); ?>
+    </a>
 </h2>
 
 <div class="post-content">
-    <?php echo $post_content ?? '<p>Contenido no disponible...</p>'; ?>
+    <?php echo $postContent ?? '<p>Contenido no disponible...</p>'; ?>
 </div>
 
 <div style="text-align: center; margin-top: 30px;">
-    <a href="<?php echo esc_url( $post_link ?? '#' ); ?>" class="btn-primary">Leer en la web</a>
+    <a href="<?php echo esc_url($postLink ?? '#'); ?>" class="btn-primary">Leer en la web</a>
 </div>
 
 <?php
-$email_content = ob_get_clean();
+$emailContent = ob_get_clean();
+$emailTitle = $postTitle ?? 'Nueva publicación';
 
-// 2. Configuramos variables para el layout
-$email_title = 'Nueva publicación'; // Opcional: podrías pasar $post_title
-
-// 3. Cargamos el layout maestro
-include ADP_PATH . 'templates/emails/layout.php';
+require ADP_PATH . 'templates/emails/layout.php';
 ?>
