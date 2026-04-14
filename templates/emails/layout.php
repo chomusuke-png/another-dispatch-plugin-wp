@@ -45,8 +45,8 @@ $emailTitle = $emailTitle ?? 'Notificación';
                     </h1>
                 </div>
 
-                <div class="email-meta">
-                    <?php echo esc_html($emailTitle); ?>
+                <div class="email-meta adp-scrolling-container">
+                    <span class="adp-scrolling-text"><?php echo esc_html($emailTitle); ?></span>
                 </div>
 
                 <div class="content-body">

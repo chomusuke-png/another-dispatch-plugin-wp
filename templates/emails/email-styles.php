@@ -145,4 +145,21 @@ $rootSelector = (isset($isPreview) && $isPreview) ? '.adp-email-wrapper' : 'body
     }
     .footer p { margin: 5px 0; }
     .footer a { color: #777777; text-decoration: underline; }
+
+    /* Animación de desplazamiento */
+    .adp-scrolling-container {
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        width: 100%;
+    }
+    .adp-scrolling-text {
+        display: inline-block;
+        padding-left: 100%;
+        animation: adp-scroll-left 15s linear infinite;
+    }
+    @keyframes adp-scroll-left {
+        0%   { transform: translate(0, 0); }
+        100% { transform: translate(-100%, 0); }
+    }
 </style>
