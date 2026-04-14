@@ -14,9 +14,9 @@
     "woocommerce/action-scheduler": "^3.9"
   },
   "autoload": {
-    "classmap": [
-      "includes/"
-    ]
+    "psr-4": {
+      "Zumito\\ADP\\": "src/"
+    }
   },
   "config": {
     "optimize-autoloader": true
