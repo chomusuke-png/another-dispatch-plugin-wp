@@ -165,6 +165,8 @@ class AdminManager
                 'msg'  => 'Importación completada (' . (isset($_GET['count']) ? intval($_GET['count']) : 0) . ' registros).',
                 'type' => 'success'
             ],
+            'import_error'   => ['msg' => 'Error al subir el archivo. Es probable que supere el peso máximo permitido por tu servidor.', 'type' => 'error'],
+            'invalid_file'   => ['msg' => 'Archivo no válido. Asegúrate de subir un archivo con extensión .csv', 'type' => 'error'],
         ];
 
         return $messages[$code] ?? ['msg' => 'Acción procesada.', 'type' => 'success'];

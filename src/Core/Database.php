@@ -141,41 +141,27 @@ class Database
             return 0;
         }
 
-        $insertedCount = 0;
+        $values = [];
+        $placeholders = [];
         $status = 'active'; 
 
-        $this->db->query('START TRANSACTION');
+        foreach ($emails as $email) {
+            $hash = md5($email . time() . wp_salt());
 
-        try {
-            foreach ($emails as $email) {
-                $hash = md5($email . time() . wp_salt());
-                
-                $checkQuery = $this->db->prepare("SELECT id FROM {$this->tableName} WHERE email = %s", $email);
-                if ($this->db->get_var($checkQuery)) {
-                    continue;
-                }
+            $values[] = $email;
+            $values[] = $hash;
+            $values[] = $status;
 
-                $inserted = $this->db->insert(
-                    $this->tableName,
-                    [
-                        'email'  => $email,
-                        'hash'   => $hash,
-                        'status' => $status
-                    ],
-                    ['%s', '%s', '%s']
-                );
-
-                if ($inserted) {
-                    $insertedCount++;
-                }
-            }
-            $this->db->query('COMMIT');
-        } catch (\Exception $exception) {
-            $this->db->query('ROLLBACK');
-            return 0;
+            $placeholders[] = "(%s, %s, %s)";
         }
 
-        return $insertedCount;
+        $query = "INSERT IGNORE INTO {$this->tableName} (email, hash, status) VALUES " . implode(', ', $placeholders);
+
+        $preparedQuery = $this->db->prepare($query, ...$values);
+
+        $affectedRows = $this->db->query($preparedQuery);
+
+        return is_numeric($affectedRows) ? (int)$affectedRows : 0;
     }
 
     public function getAllSubscribersForExport(): array

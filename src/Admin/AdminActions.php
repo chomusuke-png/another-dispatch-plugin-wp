@@ -73,31 +73,45 @@ class AdminActions
         check_admin_referer('adp_import_csv', 'adp_import_nonce');
 
         if (empty($_FILES['adp_import_file']['tmp_name'])) {
-            $this->redirectWithMessage('test_error');
+            $this->redirectWithMessage('import_error');
         }
 
-        $tmpName = sanitize_text_field(wp_unslash($_FILES['adp_import_file']['tmp_name']));
+        $fileArray = wp_unslash($_FILES['adp_import_file']);
+        
+        $fileType = wp_check_filetype(basename($fileArray['name']));
+        if ($fileType['ext'] !== 'csv') {
+            $this->redirectWithMessage('invalid_file');
+        }
+
+        $tmpName = sanitize_text_field($fileArray['tmp_name']);
         $fileStream = fopen($tmpName, 'r');
         
         if ($fileStream === false) {
-            $this->redirectWithMessage('test_error');
+            $this->redirectWithMessage('import_error');
         }
 
-        $validEmails = [];
-        while (($csvData = fgetcsv($fileStream, 1000, ',')) !== false) {
-            if (isset($csvData[0])) {
-                $email = sanitize_email($csvData[0]);
-                if (is_email($email)) {
-                    $validEmails[] = $email;
-                }
+        $chunk = [];
+        $totalImported = 0;
+        
+        while (($csvData = fgetcsv($fileStream, 2000, ',')) !== false) {
+            $rawEmail = isset($csvData[0]) ? trim($csvData[0]) : '';
+            $email = sanitize_email($rawEmail);
+            
+            if (is_email($email)) {
+                $chunk[] = $email;
+            }
+
+            if (count($chunk) >= 100) {
+                $totalImported += $this->database->bulkInsert($chunk);
+                $chunk = []; 
             }
         }
-        fclose($fileStream);
-
-        $totalImported = 0;
-        foreach (array_chunk($validEmails, 100) as $chunk) {
+        
+        if (!empty($chunk)) {
             $totalImported += $this->database->bulkInsert($chunk);
         }
+
+        fclose($fileStream);
 
         $this->redirectWithMessage('imported', ['count' => $totalImported]);
     }
