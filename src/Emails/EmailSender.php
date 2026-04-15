@@ -50,11 +50,16 @@ class EmailSender
                 'blogName'        => get_bloginfo('name')
             ]);
 
+            $headers = [
+                'Content-Type: text/html; charset=UTF-8',
+                'List-Unsubscribe: <' . $unsubscribeLink . '>'
+            ];
+
             wp_mail(
                 $subscriber->email, 
                 get_the_title($post->ID), 
                 $htmlContent, 
-                ['Content-Type: text/html; charset=UTF-8']
+                $headers
             );
         }
 
@@ -106,11 +111,16 @@ class EmailSender
                 'blogName'        => get_bloginfo('name')
             ]);
 
+            $headers = [
+                'Content-Type: text/html; charset=UTF-8',
+                'List-Unsubscribe: <' . $unsubscribeLink . '>'
+            ];
+
             wp_mail(
                 $subscriber->email, 
                 'Resumen de Artículos - ' . get_bloginfo('name'), 
                 $htmlContent, 
-                ['Content-Type: text/html; charset=UTF-8']
+                $headers
             );
         }
 

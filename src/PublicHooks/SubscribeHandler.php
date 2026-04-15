@@ -20,6 +20,10 @@ class SubscribeHandler
 
     public function handleSubscription(): void
     {
+        if (!empty($_POST['adp_honey_check'])) {
+            $this->redirectBackWithSuccess('subscribed');
+        }
+
         if (!isset($_POST['adp_subscribe_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['adp_subscribe_nonce'])), 'adp_subscribe_action')) {
             wp_die('Error de seguridad. La petición no es válida.', 'Error', ['response' => 403]);
         }
