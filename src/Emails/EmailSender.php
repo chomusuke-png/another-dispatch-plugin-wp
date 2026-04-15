@@ -20,6 +20,38 @@ class EmailSender
         add_action('adp_send_welcome_email_event', [$this, 'sendWelcomeEmail'], 10, 2);
         add_action('adp_weekly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_monthly_digest_event', [$this, 'processDigestSend'], 10, 1);
+        add_action('adp_process_retroactive_welcome_batch', [$this, 'processRetroactiveWelcomeBatch'], 10, 1);
+    }
+
+    public function processRetroactiveWelcomeBatch(int $offset): void
+    {
+        $batchSize = 100;
+        $subscribers = $this->database->getSubscribers($batchSize, $offset, 'active');
+
+        if (empty($subscribers)) {
+            return;
+        }
+
+        foreach ($subscribers as $subscriber) {
+            $hash = isset($subscriber->hash) ? (string) $subscriber->hash : '';
+            
+            if (function_exists('as_enqueue_async_action')) {
+                as_enqueue_async_action(
+                    'adp_send_welcome_email_event',
+                    ['email' => $subscriber->email, 'hash' => $hash],
+                    'adp_emails'
+                );
+            }
+        }
+
+        // Si el lote vino lleno, asumimos que hay más, así que encolamos el siguiente offset
+        if (count($subscribers) === $batchSize && function_exists('as_enqueue_async_action')) {
+            as_enqueue_async_action(
+                'adp_process_retroactive_welcome_batch',
+                ['offset' => $offset + $batchSize],
+                'adp_emails'
+            );
+        }
     }
 
     public function processBatchSend(int $postId, int $offset): void

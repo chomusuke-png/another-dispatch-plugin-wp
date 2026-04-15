@@ -28,6 +28,23 @@ class AdminActions
         $this->processVerificationResend();
         $this->processSmtpTest();
         $this->processManualTrigger();
+        $this->processRetroactiveWelcome();
+    }
+
+    private function processRetroactiveWelcome(): void
+    {
+        if (!isset($_POST['adp_action_retroactive_welcome'])) {
+            return;
+        }
+
+        check_admin_referer('adp_retroactive_welcome_nonce');
+
+        if (function_exists('as_enqueue_async_action')) {
+            as_enqueue_async_action('adp_process_retroactive_welcome_batch', ['offset' => 0], 'adp_emails');
+            $this->redirectWithMessage('retroactive_queued');
+        } else {
+            $this->redirectWithMessage('test_error');
+        }
     }
 
     private function processCsvExport(): void

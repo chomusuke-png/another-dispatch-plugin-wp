@@ -173,6 +173,19 @@ if (!defined('ABSPATH')) {
                     </form>
                 </div>
             </div>
+            <div class="postbox" style="margin-top: 20px; border-left: 4px solid #dba617;">
+                <div class="postbox-header"><h2 class="hndle">Herramienta de Migración: Bienvenida Retroactiva</h2></div>
+                <div class="inside">
+                    <p>Utiliza este botón <strong>una sola vez</strong> para encolar el correo de bienvenida a todos los usuarios que ya están en estado <code>active</code>.</p>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=another-dispatch-plugin')); ?>">
+                        <?php wp_nonce_field('adp_retroactive_welcome_nonce'); ?>
+                        <input type="hidden" name="adp_action_retroactive_welcome" value="1">
+                        <button type="submit" class="button button-primary" onclick="return confirm('¿Estás seguro? Esto programará miles de correos en Action Scheduler.');">
+                            Enviar Bienvenida a Todos
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
