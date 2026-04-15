@@ -27,15 +27,17 @@ jQuery(document).ready(function($) {
     $('input[name="adp_preview_mode"]').on('change', function() {
         var mode = $(this).val();
         var $container = $('#adp-sim-content-area'); 
-        var $title = $('#adp-sim-main-title');
+        var $title = $('.adp-preview-title');
+
+        var titlesMap = {
+            'single': 'Vista Previa: Single Post',
+            'digest': 'Vista Previa: Resumen Semanal',
+            'welcome': 'Vista Previa: Bienvenida',
+            'verification': 'Vista Previa: Verificación'
+        };
 
         $container.css('opacity', 0.5); 
-        
-        if(mode === 'digest') {
-            $title.text('Resumen Semanal');
-        } else {
-            $title.text('Nueva Publicación');
-        }
+        $title.text(titlesMap[mode] || 'Vista Previa en Vivo');
 
         $.ajax({
             url: adp_vars.ajax_url,

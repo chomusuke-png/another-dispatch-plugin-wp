@@ -39,5 +39,8 @@ class AdminSettings
         
         register_setting('adp_customizer_settings', 'adp_logo_url', ['sanitize_callback' => 'esc_url_raw']);
         register_setting('adp_customizer_settings', 'adp_footer_text', ['sanitize_callback' => 'wp_kses_post']);
+
+        register_setting('adp_customizer_settings', 'adp_welcome_subject', $sanitizeTextFieldArgs);
+        register_setting('adp_customizer_settings', 'adp_welcome_content', ['sanitize_callback' => 'wp_kses_post']);
     }
 }

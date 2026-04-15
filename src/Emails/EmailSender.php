@@ -17,6 +17,7 @@ class EmailSender
 
         add_action('adp_process_batch_send', [$this, 'processBatchSend'], 10, 2);
         add_action('adp_send_verification_email_event', [$this, 'sendVerificationEmail'], 10, 2);
+        add_action('adp_send_welcome_email_event', [$this, 'sendWelcomeEmail'], 10, 2);
         add_action('adp_weekly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_monthly_digest_event', [$this, 'processDigestSend'], 10, 1);
     }
@@ -153,6 +154,38 @@ class EmailSender
             $htmlContent, 
             ['Content-Type: text/html; charset=UTF-8']
         );
+    }
+
+    public function sendWelcomeEmail(string $email, string $hash): void
+    {
+        $subject = get_option('adp_welcome_subject', '¡Bienvenido a nuestro Newsletter!');
+        $content = get_option('adp_welcome_content', '<p>Gracias por confirmar tu suscripción. Estamos felices de tenerte con nosotros.</p>');
+        $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
+
+        $htmlContent = $this->renderTemplate('welcome', [
+            'emailTitle'      => $subject,
+            'welcomeContent'  => wpautop(wp_kses_post($content)),
+            'unsubscribeLink' => $unsubscribeLink,
+            'blogName'        => get_bloginfo('name')
+        ]);
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'List-Unsubscribe: <' . $unsubscribeLink . '>'
+        ];
+
+        $sent = wp_mail(
+            $email, 
+            $subject, 
+            $htmlContent, 
+            $headers
+        );
+
+        if ($sent) {
+            $this->database->updateSubscriberStatus($email, 'active');
+        } else {
+            error_log('ADP Error: No se pudo enviar el correo de bienvenida a ' . $email);
+        }
     }
 
     private function renderTemplate(string $templateName, array $contextData): string

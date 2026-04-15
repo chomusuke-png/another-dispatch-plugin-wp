@@ -6,14 +6,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$logoUrl     = get_option('adp_logo_url', '');
-$headerBg    = get_option('adp_color_header_bg', '#2271b1');
-$headerText  = get_option('adp_color_header_text', '#ffffff');
-$bodyBg      = get_option('adp_body_bg', '#f0f0f1');
-$btnBg       = get_option('adp_color_btn_bg', '#2271b1');
-$btnText     = get_option('adp_color_btn_text', '#ffffff');
-$linkBg      = get_option('adp_color_links', '#2271b1');
-$footerText  = get_option('adp_footer_text', '© 2026 Tu Empresa. Todos los derechos reservados.');
+$logoUrl        = get_option('adp_logo_url', '');
+$headerBg       = get_option('adp_color_header_bg', '#2271b1');
+$headerText     = get_option('adp_color_header_text', '#ffffff');
+$bodyBg         = get_option('adp_body_bg', '#f0f0f1');
+$btnBg          = get_option('adp_color_btn_bg', '#2271b1');
+$btnText        = get_option('adp_color_btn_text', '#ffffff');
+$linkBg         = get_option('adp_color_links', '#2271b1');
+$footerText     = get_option('adp_footer_text', '© 2026 Tu Empresa. Todos los derechos reservados.');
+$welcomeSubject = get_option('adp_welcome_subject', '¡Bienvenido a nuestro Newsletter!');
+$welcomeContent = get_option('adp_welcome_content', '<p>Gracias por confirmar tu suscripción. Pronto recibirás nuestras novedades.</p>');
 ?>
 
 <div class="wrap adp-wrap">
@@ -50,6 +52,27 @@ $footerText  = get_option('adp_footer_text', '© 2026 Tu Empresa. Todos los dere
                                 <button type="button" class="button button-secondary" id="adp-upload-logo-btn">Subir Logo</button>
                                 <button type="button" class="button link-delete <?php echo empty($logoUrl) ? 'hidden' : ''; ?>" id="adp-remove-logo-btn" style="color: #d63638;">Quitar</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Mensaje de Bienvenida</h2></div>
+                    <div class="inside">
+                        <div class="adp-form-group">
+                            <label for="adp_welcome_subject" style="font-weight: 600; display:block; margin-bottom: 5px;">Asunto del Correo</label>
+                            <input type="text" name="adp_welcome_subject" id="adp_welcome_subject" value="<?php echo esc_attr($welcomeSubject); ?>" class="widefat">
+                        </div>
+                        <div class="adp-form-group" style="margin-top: 15px;">
+                            <label for="adp_welcome_content" style="font-weight: 600; display:block; margin-bottom: 5px;">Contenido del Correo</label>
+                            <?php
+                            wp_editor($welcomeContent, 'adp_welcome_content', [
+                                'textarea_name' => 'adp_welcome_content',
+                                'media_buttons' => false,
+                                'textarea_rows' => 6,
+                                'teeny'         => true,
+                            ]);
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -92,7 +115,7 @@ $footerText  = get_option('adp_footer_text', '© 2026 Tu Empresa. Todos los dere
             <div class="adp-preview-pane">
                 <div class="adp-sticky-wrapper">
                     <div class="adp-preview-header-bar">
-                        <h3 class="adp-preview-title">Vista Previa en Vivo</h3>
+                        <h3 class="adp-preview-title">Vista Previa: Single Post</h3>
                         <div class="adp-view-switch">
                             <label>
                                 <input type="radio" name="adp_preview_mode" value="single" checked>
@@ -101,6 +124,14 @@ $footerText  = get_option('adp_footer_text', '© 2026 Tu Empresa. Todos los dere
                             <label>
                                 <input type="radio" name="adp_preview_mode" value="digest">
                                 <span>Digest</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="adp_preview_mode" value="verification">
+                                <span>Verificación</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="adp_preview_mode" value="welcome">
+                                <span>Bienvenida</span>
                             </label>
                         </div>
                     </div>

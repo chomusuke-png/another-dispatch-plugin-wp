@@ -3,7 +3,7 @@
  * Plugin Name: Another Dispatch Plugin Re
  * Plugin URI:  https://github.com/chomusuke-png/another-dispatch-plugin-wp
  * Description: Sistema moderno y escalable para envíos masivos y automatizados de correos electrónicos.
- * Version:     2.6.4
+ * Version:     2.6.5
  * Author:      Zumito
  * Text Domain: another-dispatch-plugin
  *
@@ -56,6 +56,7 @@ use Zumito\ADP\PublicHooks\PublicAssets;
 use Zumito\ADP\PublicHooks\Shortcode;
 use Zumito\ADP\PublicHooks\SubscribeHandler;
 use Zumito\ADP\PublicHooks\UnsubscribeHandler;
+use Zumito\ADP\PublicHooks\VerificationHandler;
 use Zumito\ADP\PublicHooks\Widget;
 
 // 3. Registro de Hooks de Activación
@@ -98,6 +99,7 @@ add_action('plugins_loaded', function (): void {
         new Shortcode();
         new SubscribeHandler($database);
         new UnsubscribeHandler($database);
+        new VerificationHandler($database);
         new Widget();
 
     } catch (\Exception $exception) {

@@ -27,36 +27,50 @@ class AdminAjax
             $mode = isset($_POST['mode']) ? sanitize_text_field(wp_unslash($_POST['mode'])) : 'single';
             $blogName = get_bloginfo('name');
             $isPreview = true;
+            $unsubscribeLink = '#';
 
             ob_start();
 
-            if ($mode === 'digest') {
-                $emailTitle = 'Resumen Semanal';
-                $postsList = [
-                    (object) [
-                        'ID'           => 0,
-                        'post_title'   => 'Cómo optimizar WordPress en 2026',
-                        'post_excerpt' => 'Descubre las nuevas técnicas de caché...',
-                        'mock_link'    => '#'
-                    ],
-                    (object) [
-                        'ID'           => 0,
-                        'post_title'   => 'Tendencias de Diseño Web',
-                        'post_excerpt' => 'El minimalismo extremo vuelve a estar de moda...',
-                        'mock_link'    => '#'
-                    ],
-                ];
-                $unsubscribeLink = '#';
+            switch ($mode) {
+                case 'digest':
+                    $emailTitle = 'Resumen Semanal';
+                    $postsList = [
+                        (object) [
+                            'ID'           => 0,
+                            'post_title'   => 'Cómo optimizar WordPress en 2026',
+                            'post_excerpt' => 'Descubre las nuevas técnicas de caché...',
+                            'mock_link'    => '#'
+                        ],
+                        (object) [
+                            'ID'           => 0,
+                            'post_title'   => 'Tendencias de Diseño Web',
+                            'post_excerpt' => 'El minimalismo extremo vuelve a estar de moda...',
+                            'mock_link'    => '#'
+                        ],
+                    ];
+                    require ADP_PATH . 'templates/emails/digest.php';
+                    break;
+                
+                case 'welcome':
+                    $emailTitle = get_option('adp_welcome_subject', '¡Bienvenido a nuestro Newsletter!');
+                    $welcomeContent = wpautop(wp_kses_post(get_option('adp_welcome_content', '<p>Gracias por confirmar tu suscripción. Estamos felices de tenerte con nosotros.</p>')));
+                    require ADP_PATH . 'templates/emails/welcome.php';
+                    break;
 
-                require ADP_PATH . 'templates/emails/digest.php';
-            } else {
-                $postTitle = 'Bienvenido a nuestro Newsletter';
-                $postContent = '<p>Este es un ejemplo de cómo se verán tus correos.</p><p>Puedes personalizar los colores, el logo y el pie de página desde el panel de la izquierda. Los cambios se reflejan en tiempo real.</p>';
-                $postLink = '#';
-                $featuredImage = '';
-                $unsubscribeLink = '#';
+                case 'verification':
+                    $emailTitle = 'Confirma tu suscripción';
+                    $verificationLink = '#';
+                    require ADP_PATH . 'templates/emails/verification.php';
+                    break;
 
-                require ADP_PATH . 'templates/emails/single.php';
+                case 'single':
+                default:
+                    $postTitle = 'Bienvenido a nuestro Newsletter';
+                    $postContent = '<p>Este es un ejemplo de cómo se verán tus correos.</p><p>Puedes personalizar los colores, el logo y el pie de página desde el panel de la izquierda. Los cambios se reflejan en tiempo real.</p>';
+                    $postLink = '#';
+                    $featuredImage = '';
+                    require ADP_PATH . 'templates/emails/single.php';
+                    break;
             }
 
             $htmlContent = ob_get_clean();
