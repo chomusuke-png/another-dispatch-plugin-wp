@@ -7,13 +7,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (empty($featuredImage) && !empty($isPreview)) {
+    $featuredImage = 'https://placehold.co/600x400';
+}
+
 ob_start(); 
 ?>
 
 <?php if (!empty($featuredImage)) : ?>
-    <a href="<?php echo esc_url($postLink ?? '#'); ?>">
-        <img src="<?php echo esc_url($featuredImage); ?>" alt="<?php echo esc_attr($postTitle ?? ''); ?>" class="post-thumb">
-    </a>
+    <div style="text-align: center; margin-bottom: 25px;">
+        <a href="<?php echo esc_url($postLink ?? '#'); ?>" style="display: block;">
+            <img src="<?php echo esc_url($featuredImage); ?>" alt="<?php echo esc_attr($postTitle ?? ''); ?>" class="post-thumb" width="600" style="width: 100%; max-width: 600px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+        </a>
+    </div>
 <?php endif; ?>
 
 <h2 class="post-title">
