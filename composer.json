@@ -11,7 +11,8 @@
   ],
   "require": {
     "php": ">=7.4",
-    "woocommerce/action-scheduler": "^3.9"
+    "woocommerce/action-scheduler": "^3.9",
+    "webklex/php-imap": "^6.2"
   },
   "autoload": {
     "psr-4": {

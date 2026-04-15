@@ -34,5 +34,10 @@ class SmtpConfig
             $phpmailer->From = $senderEmail;
             $phpmailer->FromName = get_bloginfo('name');
         }
+
+        $bounceEmail = get_option('adp_bounce_email', $senderEmail);
+        if (!empty($bounceEmail)) {
+            $phpmailer->Sender = $bounceEmail; 
+        }
     }
 }

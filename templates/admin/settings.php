@@ -60,6 +60,37 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
 
+                <div class="postbox">
+                    <div class="postbox-header"><h2 class="hndle">Gestión de Rebotes (IMAP)</h2></div>
+                    <div class="inside">
+                        <p class="description" style="margin-bottom: 15px; font-style: italic;">
+                            Configura un buzón dedicado para recibir correos devueltos. El plugin revisará esta bandeja periódicamente para marcar los correos no existentes como rebotados (bounced).
+                        </p>
+                        <p>
+                            <label class="adp-label-title" for="adp_bounce_email">Buzón de Rebotes (Return-Path Email):</label>
+                            <input type="email" id="adp_bounce_email" name="adp_bounce_email" value="<?php echo esc_attr(get_option('adp_bounce_email')); ?>" class="widefat" placeholder="ej: rebotes@tudominio.com">
+                            <span class="description">Los correos fallidos regresarán aquí. Si lo dejas vacío, los rebotes llegarán al Remitente (From Email).</span>
+                        </p>
+                        <hr style="margin: 20px 0; border-top: 1px solid #f0f0f1;">
+                        <p>
+                            <label class="adp-label-title" for="adp_imap_host">Host IMAP:</label>
+                            <input type="text" id="adp_imap_host" name="adp_imap_host" value="<?php echo esc_attr(get_option('adp_imap_host')); ?>" class="widefat">
+                        </p>
+                        <p>
+                            <label class="adp-label-title">Puerto IMAP:</label>
+                            <input type="number" name="adp_imap_port" value="<?php echo esc_attr(get_option('adp_imap_port', '993')); ?>" class="widefat">
+                        </p>
+                        <p>
+                            <label class="adp-label-title">Usuario IMAP:</label>
+                            <input type="text" name="adp_imap_user" value="<?php echo esc_attr(get_option('adp_imap_user')); ?>" class="widefat" placeholder="ej: rebotes@tudominio.com">
+                        </p>
+                        <p>
+                            <label class="adp-label-title">Contraseña IMAP:</label>
+                            <input type="password" name="adp_imap_pass" value="<?php echo esc_attr(get_option('adp_imap_pass')); ?>" class="widefat">
+                        </p>
+                    </div>
+                </div>
+
                 <div style="margin-top: 20px;">
                     <?php submit_button('Guardar Configuración', 'primary', 'submit', false, ['style' => 'width: 100%; padding: 10px;']); ?>
                 </div>
