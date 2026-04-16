@@ -8,19 +8,20 @@ class Activator
 {
     public static function activate(): void
     {
-        self::createDatabaseTable();
+        self::createDatabaseTables();
         self::setDefaultOptions();
         self::scheduleMaintenanceTasks();
     }
 
-    private static function createDatabaseTable(): void
+    private static function createDatabaseTables(): void
     {
         global $wpdb;
 
-        $tableName = $wpdb->prefix . 'adp_subscribers';
         $charsetCollate = $wpdb->get_charset_collate();
+        $subscribersTable = $wpdb->prefix . 'adp_subscribers';
+        $logsTable = $wpdb->prefix . 'adp_event_logs';
 
-        $sql = "CREATE TABLE {$tableName} (
+        $sql = "CREATE TABLE {$subscribersTable} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             email varchar(100) NOT NULL,
             hash varchar(64) NOT NULL,
@@ -30,8 +31,20 @@ class Activator
             UNIQUE KEY email (email)
         ) {$charsetCollate};";
 
+        $sqlLogs = "CREATE TABLE {$logsTable} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            email varchar(100) NOT NULL,
+            event_type varchar(20) NOT NULL,
+            url text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY  (id),
+            KEY email (email),
+            KEY event_type (event_type)
+        ) {$charsetCollate};";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+        dbDelta($sqlLogs);
     }
 
     private static function setDefaultOptions(): void

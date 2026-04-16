@@ -20,7 +20,6 @@ define('ADP_VERSION', '2.6.0');
 define('ADP_PATH', plugin_dir_path(__FILE__));
 define('ADP_URL', plugin_dir_url(__FILE__));
 
-// 1. Validar e incluir el autoloader de Composer
 $composerAutoloader = ADP_PATH . 'vendor/autoload.php';
 
 if (!file_exists($composerAutoloader)) {
@@ -32,7 +31,6 @@ if (!file_exists($composerAutoloader)) {
 
 require_once $composerAutoloader;
 
-// 2. Inicializar Action Scheduler desde el vendor (si está empaquetado con el plugin)
 $actionSchedulerBootstrap = ADP_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 if (file_exists($actionSchedulerBootstrap)) {
     require_once $actionSchedulerBootstrap;
@@ -58,16 +56,14 @@ use Zumito\ADP\PublicHooks\SubscribeHandler;
 use Zumito\ADP\PublicHooks\UnsubscribeHandler;
 use Zumito\ADP\PublicHooks\VerificationHandler;
 use Zumito\ADP\PublicHooks\Widget;
+use Zumito\ADP\PublicHooks\TrackingHandler;
 
 use Zumito\ADP\Bounces\BounceFetcher;
 
-// 3. Registro de Hooks de Activación
 register_activation_hook(__FILE__, [Activator::class, 'activate']);
 
-// 4. Inicializador Principal e Inyección de Dependencias
 add_action('plugins_loaded', function (): void {
 
-    // Validar que Action Scheduler esté disponible (ya sea global o desde nuestro vendor)
     if (!function_exists('as_enqueue_async_action')) {
         add_action('admin_notices', function (): void {
             echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin Re:</strong> Este plugin requiere tener instalado y activo el motor <strong>Action Scheduler</strong> (incluido en WooCommerce o disponible como plugin independiente). Ocurrió un error al intentar cargarlo desde la carpeta vendor.</p></div>';
@@ -76,13 +72,10 @@ add_action('plugins_loaded', function (): void {
     }
 
     try {
-        // Instanciar la capa de Base de Datos una única vez
         $database = new Database();
 
-        // Core / Mantenimiento
         new Cleanup($database);
 
-        // Capa de Administración (Solo se carga en el backend)
         if (is_admin()) {
             new AdminManager($database);
             new AdminActions($database);
@@ -91,21 +84,19 @@ add_action('plugins_loaded', function (): void {
             new AdminSettings();
         }
 
-        // Capa de Correos y Motor de Envíos
         new SmtpConfig();
         new PostWatcher();
         new EmailSender($database);
 
-        // Motor de lectura de Rebotes vía IMAP
         new BounceFetcher($database);
 
-        // Capa Pública / Frontend
         new PublicAssets();
         new Shortcode();
         new SubscribeHandler($database);
         new UnsubscribeHandler($database);
         new VerificationHandler($database);
         new Widget();
+        new TrackingHandler($database);
 
     } catch (\Exception $exception) {
         error_log('Another Dispatch Plugin Error de Inicialización: ' . $exception->getMessage());

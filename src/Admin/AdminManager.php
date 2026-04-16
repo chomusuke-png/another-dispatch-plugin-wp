@@ -40,6 +40,15 @@ class AdminManager
 
         add_submenu_page(
             'another-dispatch-plugin',
+            'Estadísticas',
+            'Estadísticas',
+            'manage_options',
+            'adp-statistics',
+            [$this, 'renderStatisticsPage']
+        );
+
+        add_submenu_page(
+            'another-dispatch-plugin',
             'Configuración Global',
             'Settings',
             'manage_options',
@@ -103,6 +112,20 @@ class AdminManager
         }
         
         require ADP_PATH . 'templates/admin/dashboard.php';
+    }
+
+    public function renderStatisticsPage(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+
+        $totalOpens = $this->database->getEventCount('open');
+        $totalClicks = $this->database->getEventCount('click');
+        $topLinks = $this->database->getTopClickedLinks(10);
+        $recentEvents = $this->database->getRecentEvents(50);
+
+        require ADP_PATH . 'templates/admin/statistics.php';
     }
 
     public function renderSettingsPage(): void
@@ -171,15 +194,19 @@ class AdminManager
             'resent_success' => ['msg' => 'Correo de verificación reenviado correctamente.', 'type' => 'success'],
             'test_success'   => ['msg' => 'Correo de prueba SMTP enviado.', 'type' => 'success'],
             'test_error'     => ['msg' => 'Error SMTP o Action Scheduler no activo.', 'type' => 'error'],
+            'imap_test_success'=> ['msg' => 'Conexión IMAP establecida correctamente.', 'type' => 'success'],
+            'imap_test_error'=> ['msg' => 'Error de conexión IMAP. Revisa las credenciales o puertos.', 'type' => 'error'],
+            'imap_test_empty'=> ['msg' => 'Faltan datos para realizar la prueba IMAP.', 'type' => 'warning'],
             'digest_queued'  => ['msg' => 'Resumen en cola.', 'type' => 'success'],
             'instant_queued' => ['msg' => 'Envío inmediato en cola.', 'type' => 'success'],
-            'no_posts'       => ['msg' => 'No hay posts recientes.', 'type' => 'warning'],
+            'retroactive_queued' => ['msg' => 'Correos de bienvenida encolados masivamente.', 'type' => 'success'],
+            'no_posts'       => ['msg' => 'No hay posts recientes para enviar.', 'type' => 'warning'],
             'imported'       => [
                 'msg'  => 'Importación completada (' . (isset($_GET['count']) ? intval($_GET['count']) : 0) . ' registros).',
                 'type' => 'success'
             ],
-            'import_error'   => ['msg' => 'Error al subir el archivo. Es probable que supere el peso máximo permitido por tu servidor.', 'type' => 'error'],
-            'invalid_file'   => ['msg' => 'Archivo no válido. Asegúrate de subir un archivo con extensión .csv', 'type' => 'error'],
+            'import_error'   => ['msg' => 'Error al subir el archivo.', 'type' => 'error'],
+            'invalid_file'   => ['msg' => 'Archivo no válido. Solo CSV.', 'type' => 'error'],
         ];
 
         return $messages[$code] ?? ['msg' => 'Acción procesada.', 'type' => 'success'];

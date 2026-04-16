@@ -44,7 +44,6 @@ class EmailSender
             }
         }
 
-        // Si el lote vino lleno, asumimos que hay más, así que encolamos el siguiente offset
         if (count($subscribers) === $batchSize && function_exists('as_enqueue_async_action')) {
             as_enqueue_async_action(
                 'adp_process_retroactive_welcome_batch',
@@ -83,6 +82,8 @@ class EmailSender
                 'blogName'        => get_bloginfo('name')
             ]);
 
+            $finalHtml = $this->injectTracking($htmlContent, $subscriber->email);
+
             $headers = [
                 'Content-Type: text/html; charset=UTF-8',
                 'List-Unsubscribe: <' . $unsubscribeLink . '>'
@@ -91,7 +92,7 @@ class EmailSender
             wp_mail(
                 $subscriber->email, 
                 get_the_title($post->ID), 
-                $htmlContent, 
+                $finalHtml, 
                 $headers
             );
         }
@@ -144,6 +145,8 @@ class EmailSender
                 'blogName'        => get_bloginfo('name')
             ]);
 
+            $finalHtml = $this->injectTracking($htmlContent, $subscriber->email);
+
             $headers = [
                 'Content-Type: text/html; charset=UTF-8',
                 'List-Unsubscribe: <' . $unsubscribeLink . '>'
@@ -152,7 +155,7 @@ class EmailSender
             wp_mail(
                 $subscriber->email, 
                 'Resumen de Artículos - ' . get_bloginfo('name'), 
-                $htmlContent, 
+                $finalHtml, 
                 $headers
             );
         }
@@ -201,6 +204,8 @@ class EmailSender
             'blogName'        => get_bloginfo('name')
         ]);
 
+        $finalHtml = $this->injectTracking($htmlContent, $email);
+
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
             'List-Unsubscribe: <' . $unsubscribeLink . '>'
@@ -209,7 +214,7 @@ class EmailSender
         $sent = wp_mail(
             $email, 
             $subject, 
-            $htmlContent, 
+            $finalHtml, 
             $headers
         );
 
@@ -243,5 +248,32 @@ class EmailSender
     private function generateUnsubscribeLink(string $email, string $hash): string
     {
         return home_url('/?adp_action=unsubscribe&email=' . urlencode($email) . '&hash=' . $hash);
+    }
+
+    private function injectTracking(string $html, string $email): string
+    {
+        $encodedEmail = urlencode($email);
+
+        $html = preg_replace_callback('/href=["\'](http[s]?:\/\/[^"\']+)["\']/i', function ($matches) use ($encodedEmail) {
+            $originalUrl = $matches[1];
+            
+            if (strpos($originalUrl, 'adp_action=') !== false) {
+                return $matches[0];
+            }
+
+            $trackingUrl = home_url('/?adp_action=track_click&email=' . $encodedEmail . '&url=' . urlencode($originalUrl));
+            return 'href="' . esc_url($trackingUrl) . '"';
+        }, $html);
+
+        $pixelUrl = home_url('/?adp_action=track_open&email=' . $encodedEmail);
+        $pixelImg = '<img src="' . esc_url($pixelUrl) . '" width="1" height="1" style="display:none !important; border:none; margin:0; padding:0;" alt="" />';
+        
+        if (stripos($html, '</body>') !== false) {
+            $html = str_ireplace('</body>', $pixelImg . PHP_EOL . '</body>', $html);
+        } else {
+            $html .= $pixelImg;
+        }
+
+        return $html;
     }
 }

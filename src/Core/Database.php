@@ -10,17 +10,24 @@ class Database
 {
     private wpdb $db;
     private string $tableName;
+    private string $logsTableName;
 
     public function __construct()
     {
         global $wpdb;
         $this->db = $wpdb;
         $this->tableName = $this->db->prefix . 'adp_subscribers';
+        $this->logsTableName = $this->db->prefix . 'adp_event_logs';
     }
 
     public function getTableName(): string
     {
         return $this->tableName;
+    }
+
+    public function getLogsTableName(): string
+    {
+        return $this->logsTableName;
     }
 
     public function getSubscribers(int $limit, int $offset, string $status = 'all'): array
@@ -184,5 +191,47 @@ class Database
         $deletedCount = $this->db->query($preparedQuery);
 
         return is_numeric($deletedCount) ? (int)$deletedCount : 0;
+    }
+
+    public function logEvent(string $email, string $eventType, ?string $url = null): bool
+    {
+        $inserted = $this->db->insert(
+            $this->logsTableName,
+            [
+                'email'      => $email,
+                'event_type' => $eventType,
+                'url'        => $url
+            ],
+            ['%s', '%s', '%s']
+        );
+
+        return $inserted !== false;
+    }
+
+    public function getEventCount(string $eventType): int
+    {
+        $query = "SELECT COUNT(id) FROM {$this->logsTableName} WHERE event_type = %s";
+        $preparedQuery = $this->db->prepare($query, $eventType);
+        $count = $this->db->get_var($preparedQuery);
+
+        return intval($count);
+    }
+
+    public function getTopClickedLinks(int $limit = 5): array
+    {
+        $query = "SELECT url, COUNT(id) as click_count FROM {$this->logsTableName} WHERE event_type = 'click' GROUP BY url ORDER BY click_count DESC LIMIT %d";
+        $preparedQuery = $this->db->prepare($query, $limit);
+        $results = $this->db->get_results($preparedQuery);
+
+        return is_array($results) ? $results : [];
+    }
+
+    public function getRecentEvents(int $limit = 20): array
+    {
+        $query = "SELECT email, event_type, url, created_at FROM {$this->logsTableName} ORDER BY created_at DESC LIMIT %d";
+        $preparedQuery = $this->db->prepare($query, $limit);
+        $results = $this->db->get_results($preparedQuery);
+
+        return is_array($results) ? $results : [];
     }
 }
