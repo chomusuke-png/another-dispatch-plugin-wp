@@ -151,41 +151,6 @@ if (!defined('ABSPATH')) {
                     </form>
                 </div>
             </div>
-
-            <div class="postbox" style="border-color: #ffb900;">
-                <div class="postbox-header" style="background: #fff8e5; border-bottom-color: #f0c33c;">
-                    <h2 class="hndle" style="color: #996800;">⚡ Operaciones Manuales</h2>
-                </div>
-                <div class="inside">
-                    <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión SMTP</h3>
-                    <form method="post" action="">
-                        <?php wp_nonce_field('adp_send_test_email', 'adp_test_email_nonce'); ?>
-                        <input type="submit" name="adp_test_email_submit" class="button button-secondary" value="Probar Conexión" style="width: 100%;">
-                    </form>
-                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                    <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador de Envío</h3>
-                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                        Fuerza el envío inmediato del último post o resumen a todos los suscriptores. Úsalo con precaución.
-                    </p>
-                    <form method="post" action="" onsubmit="return confirm('¿Seguro? Esto enviará correos REALES a tus suscriptores.');">
-                        <?php wp_nonce_field('adp_test_content_action', 'adp_test_content_nonce'); ?>
-                        <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío Masivo" style="width: 100%;">
-                    </form>
-                </div>
-            </div>
-            <div class="postbox" style="margin-top: 20px; border-left: 4px solid #dba617;">
-                <div class="postbox-header"><h2 class="hndle">Herramienta de Migración: Bienvenida Retroactiva</h2></div>
-                <div class="inside">
-                    <p>Utiliza este botón <strong>una sola vez</strong> para encolar el correo de bienvenida a todos los usuarios que ya están en estado <code>active</code>.</p>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=another-dispatch-plugin')); ?>">
-                        <?php wp_nonce_field('adp_retroactive_welcome_nonce'); ?>
-                        <input type="hidden" name="adp_action_retroactive_welcome" value="1">
-                        <button type="submit" class="button button-primary" onclick="return confirm('¿Estás seguro? Esto programará miles de correos en Action Scheduler.');">
-                            Enviar Bienvenida a Todos
-                        </button>
-                    </form>
-                </div>
-            </div>
         </div>
     </div>
 </div>

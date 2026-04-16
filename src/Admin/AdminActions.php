@@ -233,8 +233,15 @@ class AdminActions
 
     private function redirectWithMessage(string $messageCode, array $additionalArgs = []): void
     {
+        $targetPage = 'another-dispatch-plugin';
+        if (isset($_POST['adp_redirect_to'])) {
+            $targetPage = sanitize_text_field(wp_unslash($_POST['adp_redirect_to']));
+        } elseif (isset($_REQUEST['page'])) {
+            $targetPage = sanitize_text_field(wp_unslash($_REQUEST['page']));
+        }
+
         $queryArguments = array_merge([
-            'page' => 'another-dispatch-plugin', 
+            'page' => $targetPage, 
             'adp_msg' => $messageCode
         ], $additionalArgs);
         

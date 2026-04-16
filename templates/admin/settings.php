@@ -150,4 +150,58 @@ if (!defined('ABSPATH')) {
             </div>
         </div>
     </form>
+
+    <h2 style="margin-top: 40px;">Herramientas del Sistema</h2>
+    <hr class="wp-header-end">
+    
+    <div class="adp-dashboard-wrapper" style="display: flex; gap: 20px; align-items: flex-start; margin-top: 20px;">
+        <div class="adp-main-column" style="flex: 2; min-width: 400px;">
+            <div class="postbox" style="border-color: #ffb900;">
+                <div class="postbox-header" style="background: #fff8e5; border-bottom-color: #f0c33c;">
+                    <h2 class="hndle" style="color: #996800;">⚡ Operaciones Manuales</h2>
+                </div>
+                <div class="inside" style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión SMTP</h3>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica que las credenciales guardadas funcionen.</p>
+                        <form method="post" action="">
+                            <?php wp_nonce_field('adp_send_test_email', 'adp_test_email_nonce'); ?>
+                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
+                            <input type="submit" name="adp_test_email_submit" class="button button-secondary" value="Probar Conexión" style="width: 100%;">
+                        </form>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador de Envío</h3>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                            Fuerza el envío inmediato del último post o resumen a todos los suscriptores. Úsalo con precaución.
+                        </p>
+                        <form method="post" action="" onsubmit="return confirm('¿Seguro? Esto enviará correos REALES a tus suscriptores.');">
+                            <?php wp_nonce_field('adp_test_content_action', 'adp_test_content_nonce'); ?>
+                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
+                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío Masivo" style="width: 100%;">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="adp-sidebar-column" style="flex: 1; min-width: 300px;">
+            <div class="postbox" style="border-left: 4px solid #dba617;">
+                <div class="postbox-header"><h2 class="hndle">Herramienta de Migración: Bienvenida</h2></div>
+                <div class="inside">
+                    <p>Utiliza este botón <strong>una sola vez</strong> para encolar el correo de bienvenida a todos los usuarios que ya están en estado <code>active</code>.</p>
+                    <form method="post" action="">
+                        <?php wp_nonce_field('adp_retroactive_welcome_nonce'); ?>
+                        <input type="hidden" name="adp_action_retroactive_welcome" value="1">
+                        <input type="hidden" name="adp_redirect_to" value="adp-settings">
+                        <button type="submit" class="button button-primary" style="width: 100%;" onclick="return confirm('¿Estás seguro? Esto programará correos en Action Scheduler para todos tus usuarios activos.');">
+                            Enviar Bienvenida a Todos
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
