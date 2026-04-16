@@ -160,10 +160,10 @@ if (!defined('ABSPATH')) {
                 <div class="postbox-header" style="background: #fff8e5; border-bottom-color: #f0c33c;">
                     <h2 class="hndle" style="color: #996800;">⚡ Operaciones Manuales</h2>
                 </div>
-                <div class="inside" style="display: flex; gap: 20px;">
+                <div class="inside" style="display: flex; gap: 20px; align-items: stretch;">
                     <div style="flex: 1;">
                         <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión SMTP</h3>
-                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica que las credenciales guardadas funcionen.</p>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica que las credenciales para enviar funcionen.</p>
                         <form method="post" action="">
                             <?php wp_nonce_field('adp_send_test_email', 'adp_test_email_nonce'); ?>
                             <input type="hidden" name="adp_redirect_to" value="adp-settings">
@@ -171,15 +171,25 @@ if (!defined('ABSPATH')) {
                         </form>
                     </div>
 
-                    <div style="flex: 1;">
-                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador de Envío</h3>
+                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
+                        <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión IMAP</h3>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica el acceso a la bandeja de rebotes.</p>
+                        <form method="post" action="">
+                            <?php wp_nonce_field('adp_test_imap_action', 'adp_test_imap_nonce'); ?>
+                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
+                            <input type="submit" name="adp_test_imap_submit" class="button button-secondary" value="Probar IMAP" style="width: 100%;">
+                        </form>
+                    </div>
+
+                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
+                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador Masivo</h3>
                         <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                            Fuerza el envío inmediato del último post o resumen a todos los suscriptores. Úsalo con precaución.
+                            Fuerza el envío del último contenido a todos los activos.
                         </p>
                         <form method="post" action="" onsubmit="return confirm('¿Seguro? Esto enviará correos REALES a tus suscriptores.');">
                             <?php wp_nonce_field('adp_test_content_action', 'adp_test_content_nonce'); ?>
                             <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío Masivo" style="width: 100%;">
+                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío" style="width: 100%;">
                         </form>
                     </div>
                 </div>

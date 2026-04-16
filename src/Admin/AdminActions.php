@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zumito\ADP\Admin;
 
 use Zumito\ADP\Core\Database;
+use Webklex\PHPIMAP\ClientManager;
 
 class AdminActions
 {
@@ -27,6 +28,7 @@ class AdminActions
         $this->processSubscriberDeletion();
         $this->processVerificationResend();
         $this->processSmtpTest();
+        $this->processImapTest();
         $this->processManualTrigger();
         $this->processRetroactiveWelcome();
     }
@@ -192,6 +194,45 @@ class AdminActions
         
         $isSent = wp_mail($currentUserEmail, $subject, $htmlMessage, $headers);
         $this->redirectWithMessage($isSent ? 'test_success' : 'test_error');
+    }
+
+    private function processImapTest(): void
+    {
+        if (!isset($_POST['adp_test_imap_submit'])) {
+            return;
+        }
+
+        check_admin_referer('adp_test_imap_action', 'adp_test_imap_nonce');
+
+        $host = get_option('adp_imap_host');
+        $user = get_option('adp_imap_user');
+        $pass = get_option('adp_imap_pass');
+        $port = (int) get_option('adp_imap_port', 993);
+
+        if (empty($host) || empty($user) || empty($pass)) {
+            $this->redirectWithMessage('imap_test_empty');
+        }
+
+        try {
+            $clientManager = new ClientManager();
+            $client = $clientManager->make([
+                'host'          => $host,
+                'port'          => $port,
+                'encryption'    => 'ssl',
+                'validate_cert' => false,
+                'username'      => $user,
+                'password'      => $pass,
+                'protocol'      => 'imap'
+            ]);
+
+            $client->connect();
+            $client->disconnect();
+
+            $this->redirectWithMessage('imap_test_success');
+        } catch (\Exception $e) {
+            error_log('ADP IMAP Test Error: ' . $e->getMessage());
+            $this->redirectWithMessage('imap_test_error');
+        }
     }
 
     private function processManualTrigger(): void
