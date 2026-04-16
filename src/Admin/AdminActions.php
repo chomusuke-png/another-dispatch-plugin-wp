@@ -237,7 +237,7 @@ class AdminActions
 
     private function processManualTrigger(): void
     {
-        if (!isset($_POST['adp_test_content_submit'])) {
+        if (!isset($_POST['adp_test_content_submit']) && !isset($_POST['adp_test_content_submit_single'])) {
             return;
         }
 
@@ -248,6 +248,19 @@ class AdminActions
         }
 
         $frequency = get_option('adp_delivery_frequency', 'instant');
+
+        if (isset($_POST['adp_test_content_submit_single'])) {
+            $email = isset($_POST['adp_single_email']) ? sanitize_email(wp_unslash($_POST['adp_single_email'])) : '';
+            
+            if (!is_email($email)) {
+                $this->redirectWithMessage('invalid_email');
+            }
+
+            as_schedule_single_action(time(), 'adp_send_single_trigger_event', ['email' => $email], 'adp_emails');
+            $this->redirectWithMessage('single_trigger_queued');
+            return;
+        }
+
         $messageCode = 'no_posts';
 
         if ($frequency === 'monthly') {

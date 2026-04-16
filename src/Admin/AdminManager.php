@@ -197,8 +197,10 @@ class AdminManager
             'imap_test_success'=> ['msg' => 'Conexión IMAP establecida correctamente.', 'type' => 'success'],
             'imap_test_error'=> ['msg' => 'Error de conexión IMAP. Revisa las credenciales o puertos.', 'type' => 'error'],
             'imap_test_empty'=> ['msg' => 'Faltan datos para realizar la prueba IMAP.', 'type' => 'warning'],
-            'digest_queued'  => ['msg' => 'Resumen en cola.', 'type' => 'success'],
-            'instant_queued' => ['msg' => 'Envío inmediato en cola.', 'type' => 'success'],
+            'digest_queued'  => ['msg' => 'Resumen en cola masiva.', 'type' => 'success'],
+            'instant_queued' => ['msg' => 'Envío masivo inmediato en cola.', 'type' => 'success'],
+            'single_trigger_queued' => ['msg' => 'Envío individual del contenido real encolado.', 'type' => 'success'],
+            'invalid_email'  => ['msg' => 'Debes proporcionar un correo electrónico válido.', 'type' => 'error'],
             'retroactive_queued' => ['msg' => 'Correos de bienvenida encolados masivamente.', 'type' => 'success'],
             'no_posts'       => ['msg' => 'No hay posts recientes para enviar.', 'type' => 'warning'],
             'imported'       => [

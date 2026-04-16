@@ -182,14 +182,20 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
-                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador Masivo</h3>
+                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador de Contenido</h3>
                         <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                            Fuerza el envío del último contenido a todos los activos.
+                            Fuerza el envío del último contenido. Útil para verificar su aspecto final en un solo correo antes del masivo.
                         </p>
-                        <form method="post" action="" onsubmit="return confirm('¿Seguro? Esto enviará correos REALES a tus suscriptores.');">
+                        <form method="post" action="">
                             <?php wp_nonce_field('adp_test_content_action', 'adp_test_content_nonce'); ?>
                             <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío" style="width: 100%;">
+                            
+                            <div style="margin-bottom: 15px; background: #f6f7f7; padding: 10px; border-radius: 4px; border: 1px solid #dcdcde;">
+                                <input type="email" name="adp_single_email" placeholder="correo@ejemplo.com" class="widefat" style="margin-bottom: 8px;">
+                                <input type="submit" name="adp_test_content_submit_single" class="button button-secondary" value="Enviar a este correo" style="width: 100%;">
+                            </div>
+                            
+                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío Masivo" style="width: 100%;" onclick="return confirm('ATENCIÓN: Esto enviará el contenido real a toda tu lista de suscriptores activos. ¿Estás absolutamente seguro?');">
                         </form>
                     </div>
                 </div>

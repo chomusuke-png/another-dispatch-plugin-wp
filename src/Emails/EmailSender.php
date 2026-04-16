@@ -21,6 +21,32 @@ class EmailSender
         add_action('adp_weekly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_monthly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_process_retroactive_welcome_batch', [$this, 'processRetroactiveWelcomeBatch'], 10, 1);
+        add_action('adp_send_single_trigger_event', [$this, 'processSingleTriggerSend'], 10, 1);
+    }
+
+    public function processSingleTriggerSend(string $email): void
+    {
+        $frequency = get_option('adp_delivery_frequency', 'instant');
+        $subscriber = $this->database->getSubscriber($email);
+
+        $hash = $subscriber ? (string) $subscriber->hash : md5($email . time() . wp_salt());
+
+        if ($frequency === 'monthly' || $frequency === 'weekly') {
+            $dateQueryStr = $frequency === 'monthly' ? '1 month ago' : '1 week ago';
+            $recentPosts = get_posts([
+                'post_status' => 'publish',
+                'date_query'  => [['after' => $dateQueryStr]]
+            ]);
+
+            if (!empty($recentPosts)) {
+                $this->dispatchDigestEmail($recentPosts, $email, $hash);
+            }
+        } else {
+            $latestPosts = get_posts(['numberposts' => 1, 'post_status' => 'publish']);
+            if (!empty($latestPosts)) {
+                $this->dispatchPostEmail($latestPosts[0], $email, $hash);
+            }
+        }
     }
 
     public function processRetroactiveWelcomeBatch(int $offset): void
@@ -67,34 +93,9 @@ class EmailSender
             return;
         }
 
-        $featuredImage = has_post_thumbnail($post->ID) ? get_the_post_thumbnail_url($post->ID, 'large') : '';
-
         foreach ($subscribers as $subscriber) {
             $hash = isset($subscriber->hash) ? (string) $subscriber->hash : '';
-            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $hash);
-            
-            $htmlContent = $this->renderTemplate('single', [
-                'postTitle'       => get_the_title($post->ID),
-                'postContent'     => apply_filters('the_content', $post->post_content),
-                'postLink'        => get_permalink($post->ID),
-                'featuredImage'   => $featuredImage,
-                'unsubscribeLink' => $unsubscribeLink,
-                'blogName'        => get_bloginfo('name')
-            ]);
-
-            $finalHtml = $this->injectTracking($htmlContent, $subscriber->email);
-
-            $headers = [
-                'Content-Type: text/html; charset=UTF-8',
-                'List-Unsubscribe: <' . $unsubscribeLink . '>'
-            ];
-
-            wp_mail(
-                $subscriber->email, 
-                get_the_title($post->ID), 
-                $finalHtml, 
-                $headers
-            );
+            $this->dispatchPostEmail($post, $subscriber->email, $hash);
         }
 
         if (count($subscribers) === $batchSize && function_exists('as_schedule_single_action')) {
@@ -136,28 +137,7 @@ class EmailSender
 
         foreach ($subscribers as $subscriber) {
             $hash = isset($subscriber->hash) ? (string) $subscriber->hash : '';
-            $unsubscribeLink = $this->generateUnsubscribeLink($subscriber->email, $hash);
-            
-            $htmlContent = $this->renderTemplate('digest', [
-                'emailTitle'      => 'Resumen de Artículos - ' . get_bloginfo('name'),
-                'postsList'       => $recentPosts,
-                'unsubscribeLink' => $unsubscribeLink,
-                'blogName'        => get_bloginfo('name')
-            ]);
-
-            $finalHtml = $this->injectTracking($htmlContent, $subscriber->email);
-
-            $headers = [
-                'Content-Type: text/html; charset=UTF-8',
-                'List-Unsubscribe: <' . $unsubscribeLink . '>'
-            ];
-
-            wp_mail(
-                $subscriber->email, 
-                'Resumen de Artículos - ' . get_bloginfo('name'), 
-                $finalHtml, 
-                $headers
-            );
+            $this->dispatchDigestEmail($recentPosts, $subscriber->email, $hash);
         }
 
         if (count($subscribers) === $batchSize && function_exists('as_schedule_single_action')) {
@@ -211,12 +191,7 @@ class EmailSender
             'List-Unsubscribe: <' . $unsubscribeLink . '>'
         ];
 
-        $sent = wp_mail(
-            $email, 
-            $subject, 
-            $finalHtml, 
-            $headers
-        );
+        $sent = wp_mail($email, $subject, $finalHtml, $headers);
 
         if ($sent) {
             $this->database->updateSubscriberStatus($email, 'active');
@@ -225,21 +200,62 @@ class EmailSender
         }
     }
 
+    private function dispatchPostEmail(\WP_Post $post, string $email, string $hash): void
+    {
+        $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
+        $featuredImage = has_post_thumbnail($post->ID) ? get_the_post_thumbnail_url($post->ID, 'large') : '';
+
+        $htmlContent = $this->renderTemplate('single', [
+            'postTitle'       => get_the_title($post->ID),
+            'postContent'     => apply_filters('the_content', $post->post_content),
+            'postLink'        => get_permalink($post->ID),
+            'featuredImage'   => $featuredImage,
+            'unsubscribeLink' => $unsubscribeLink,
+            'blogName'        => get_bloginfo('name')
+        ]);
+
+        $finalHtml = $this->injectTracking($htmlContent, $email);
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'List-Unsubscribe: <' . $unsubscribeLink . '>'
+        ];
+
+        wp_mail($email, get_the_title($post->ID), $finalHtml, $headers);
+    }
+
+    private function dispatchDigestEmail(array $posts, string $email, string $hash): void
+    {
+        $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
+        
+        $htmlContent = $this->renderTemplate('digest', [
+            'emailTitle'      => 'Resumen de Artículos - ' . get_bloginfo('name'),
+            'postsList'       => $posts,
+            'unsubscribeLink' => $unsubscribeLink,
+            'blogName'        => get_bloginfo('name')
+        ]);
+
+        $finalHtml = $this->injectTracking($htmlContent, $email);
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'List-Unsubscribe: <' . $unsubscribeLink . '>'
+        ];
+
+        wp_mail($email, 'Resumen de Artículos - ' . get_bloginfo('name'), $finalHtml, $headers);
+    }
+
     private function renderTemplate(string $templateName, array $contextData): string
     {
         extract($contextData);
-
         ob_start();
         
         try {
             require ADP_PATH . "templates/emails/{$templateName}.php";
             $content = ob_get_clean();
-            
             return $content !== false ? $content : '';
         } catch (Exception $exception) {
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
+            if (ob_get_level() > 0) ob_end_clean();
             error_log('ADP Template Error: ' . $exception->getMessage());
             return '';
         }
@@ -256,11 +272,7 @@ class EmailSender
 
         $html = preg_replace_callback('/href=["\'](http[s]?:\/\/[^"\']+)["\']/i', function ($matches) use ($encodedEmail) {
             $originalUrl = $matches[1];
-            
-            if (strpos($originalUrl, 'adp_action=') !== false) {
-                return $matches[0];
-            }
-
+            if (strpos($originalUrl, 'adp_action=') !== false) return $matches[0];
             $trackingUrl = home_url('/?adp_action=track_click&email=' . $encodedEmail . '&url=' . urlencode($originalUrl));
             return 'href="' . esc_url($trackingUrl) . '"';
         }, $html);
