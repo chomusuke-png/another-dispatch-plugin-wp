@@ -21,18 +21,18 @@ class EmailSender
         add_action('adp_weekly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_monthly_digest_event', [$this, 'processDigestSend'], 10, 1);
         add_action('adp_process_retroactive_welcome_batch', [$this, 'processRetroactiveWelcomeBatch'], 10, 1);
-        add_action('adp_send_single_trigger_event', [$this, 'processSingleTriggerSend'], 10, 1);
+        add_action('adp_send_single_trigger_event', [$this, 'processSingleTriggerSend'], 10, 2);
     }
 
-    public function processSingleTriggerSend(string $email): void
+    public function processSingleTriggerSend(string $email, string $type): void
     {
-        $frequency = get_option('adp_delivery_frequency', 'instant');
         $subscriber = $this->database->getSubscriber($email);
-
         $hash = $subscriber ? (string) $subscriber->hash : md5($email . time() . wp_salt());
 
-        if ($frequency === 'monthly' || $frequency === 'weekly') {
-            $dateQueryStr = $frequency === 'monthly' ? '1 month ago' : '1 week ago';
+        if ($type === 'welcome') {
+            $this->sendWelcomeEmail($email, $hash);
+        } elseif ($type === 'monthly' || $type === 'weekly') {
+            $dateQueryStr = $type === 'monthly' ? '1 month ago' : '1 week ago';
             $recentPosts = get_posts([
                 'post_status' => 'publish',
                 'date_query'  => [['after' => $dateQueryStr]]

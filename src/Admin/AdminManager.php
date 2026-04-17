@@ -41,10 +41,19 @@ class AdminManager
         add_submenu_page(
             'another-dispatch-plugin',
             'Estadísticas',
-            'Estadísticas',
+            'Statistics',
             'manage_options',
             'adp-statistics',
             [$this, 'renderStatisticsPage']
+        );
+
+        add_submenu_page(
+            'another-dispatch-plugin',
+            'Herramientas',
+            'Tools',
+            'manage_options',
+            'adp-tools',
+            [$this, 'renderToolsPage']
         );
 
         add_submenu_page(
@@ -128,6 +137,25 @@ class AdminManager
         require ADP_PATH . 'templates/admin/statistics.php';
     }
 
+    public function renderToolsPage(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+
+        $message = '';
+        $messageType = 'success';
+
+        if (isset($_GET['adp_msg'])) {
+            $messageCode = sanitize_text_field(wp_unslash($_GET['adp_msg']));
+            $feedback = $this->getFeedbackMessage($messageCode);
+            $message = $feedback['msg'];
+            $messageType = $feedback['type'];
+        }
+
+        require ADP_PATH . 'templates/admin/tools.php';
+    }
+
     public function renderSettingsPage(): void
     {
         if (!current_user_can('manage_options')) {
@@ -197,11 +225,11 @@ class AdminManager
             'imap_test_success'=> ['msg' => 'Conexión IMAP establecida correctamente.', 'type' => 'success'],
             'imap_test_error'=> ['msg' => 'Error de conexión IMAP. Revisa las credenciales o puertos.', 'type' => 'error'],
             'imap_test_empty'=> ['msg' => 'Faltan datos para realizar la prueba IMAP.', 'type' => 'warning'],
-            'digest_queued'  => ['msg' => 'Resumen en cola masiva.', 'type' => 'success'],
-            'instant_queued' => ['msg' => 'Envío masivo inmediato en cola.', 'type' => 'success'],
-            'single_trigger_queued' => ['msg' => 'Envío individual del contenido real encolado.', 'type' => 'success'],
-            'invalid_email'  => ['msg' => 'Debes proporcionar un correo electrónico válido.', 'type' => 'error'],
+            'digest_queued'  => ['msg' => 'Resumen encolado para envío.', 'type' => 'success'],
+            'instant_queued' => ['msg' => 'Envío inmediato encolado.', 'type' => 'success'],
             'retroactive_queued' => ['msg' => 'Correos de bienvenida encolados masivamente.', 'type' => 'success'],
+            'single_trigger_queued' => ['msg' => 'El correo ha sido programado y enviado al destinatario.', 'type' => 'success'],
+            'invalid_email'  => ['msg' => 'Debes proporcionar un correo electrónico válido.', 'type' => 'error'],
             'no_posts'       => ['msg' => 'No hay posts recientes para enviar.', 'type' => 'warning'],
             'imported'       => [
                 'msg'  => 'Importación completada (' . (isset($_GET['count']) ? intval($_GET['count']) : 0) . ' registros).',

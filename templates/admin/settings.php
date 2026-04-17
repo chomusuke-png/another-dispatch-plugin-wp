@@ -98,7 +98,7 @@ if (!defined('ABSPATH')) {
 
             <div class="adp-sidebar-column" style="flex: 1; min-width: 300px;">
                 <div class="postbox">
-                    <div class="postbox-header"><h2 class="hndle">Modo de Envío</h2></div>
+                    <div class="postbox-header"><h2 class="hndle">Modo de Envío Automático</h2></div>
                     <div class="inside">
                         <?php $frequency = get_option('adp_delivery_frequency', 'instant'); ?>
                         
@@ -143,81 +143,11 @@ if (!defined('ABSPATH')) {
                         <p>
                             <label class="adp-label-title">Días para expirar pendientes:</label>
                             <input type="number" name="adp_pending_expiration_days" value="<?php echo esc_attr(get_option('adp_pending_expiration_days', 30)); ?>" class="widefat" min="0">
-                            <span class="description" style="display:block; margin-top:5px; font-size: 12px;">Ingresa 0 para desactivar la limpieza. Por ejemplo, con el valor 7 se eliminarán los correos no verificados tras una semana.</span>
+                            <span class="description" style="display:block; margin-top:5px; font-size: 12px;">Ingresa 0 para desactivar la limpieza.</span>
                         </p>
                     </div>
                 </div>
             </div>
         </div>
     </form>
-
-    <h2 style="margin-top: 40px;">Herramientas del Sistema</h2>
-    <hr class="wp-header-end">
-    
-    <div class="adp-dashboard-wrapper" style="display: flex; gap: 20px; align-items: flex-start; margin-top: 20px;">
-        <div class="adp-main-column" style="flex: 2; min-width: 400px;">
-            <div class="postbox" style="border-color: #ffb900;">
-                <div class="postbox-header" style="background: #fff8e5; border-bottom-color: #f0c33c;">
-                    <h2 class="hndle" style="color: #996800;">⚡ Operaciones Manuales</h2>
-                </div>
-                <div class="inside" style="display: flex; gap: 20px; align-items: stretch;">
-                    <div style="flex: 1;">
-                        <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión SMTP</h3>
-                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica que las credenciales para enviar funcionen.</p>
-                        <form method="post" action="">
-                            <?php wp_nonce_field('adp_send_test_email', 'adp_test_email_nonce'); ?>
-                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                            <input type="submit" name="adp_test_email_submit" class="button button-secondary" value="Probar Conexión" style="width: 100%;">
-                        </form>
-                    </div>
-
-                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
-                        <h3 style="margin: 0 0 10px; font-size: 13px;">Conexión IMAP</h3>
-                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Verifica el acceso a la bandeja de rebotes.</p>
-                        <form method="post" action="">
-                            <?php wp_nonce_field('adp_test_imap_action', 'adp_test_imap_nonce'); ?>
-                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                            <input type="submit" name="adp_test_imap_submit" class="button button-secondary" value="Probar IMAP" style="width: 100%;">
-                        </form>
-                    </div>
-
-                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 20px;">
-                        <h3 style="margin: 0 0 10px; font-size: 13px;">Disparador de Contenido</h3>
-                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                            Fuerza el envío del último contenido. Útil para verificar su aspecto final en un solo correo antes del masivo.
-                        </p>
-                        <form method="post" action="">
-                            <?php wp_nonce_field('adp_test_content_action', 'adp_test_content_nonce'); ?>
-                            <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                            
-                            <div style="margin-bottom: 15px; background: #f6f7f7; padding: 10px; border-radius: 4px; border: 1px solid #dcdcde;">
-                                <input type="email" name="adp_single_email" placeholder="correo@ejemplo.com" class="widefat" style="margin-bottom: 8px;">
-                                <input type="submit" name="adp_test_content_submit_single" class="button button-secondary" value="Enviar a este correo" style="width: 100%;">
-                            </div>
-                            
-                            <input type="submit" name="adp_test_content_submit" class="button button-primary" value="Ejecutar Envío Masivo" style="width: 100%;" onclick="return confirm('ATENCIÓN: Esto enviará el contenido real a toda tu lista de suscriptores activos. ¿Estás absolutamente seguro?');">
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="adp-sidebar-column" style="flex: 1; min-width: 300px;">
-            <div class="postbox" style="border-left: 4px solid #dba617;">
-                <div class="postbox-header"><h2 class="hndle">Herramienta de Migración: Bienvenida</h2></div>
-                <div class="inside">
-                    <p>Utiliza este botón <strong>una sola vez</strong> para encolar el correo de bienvenida a todos los usuarios que ya están en estado <code>active</code>.</p>
-                    <form method="post" action="">
-                        <?php wp_nonce_field('adp_retroactive_welcome_nonce'); ?>
-                        <input type="hidden" name="adp_action_retroactive_welcome" value="1">
-                        <input type="hidden" name="adp_redirect_to" value="adp-settings">
-                        <button type="submit" class="button button-primary" style="width: 100%;" onclick="return confirm('¿Estás seguro? Esto programará correos en Action Scheduler para todos tus usuarios activos.');">
-                            Enviar Bienvenida a Todos
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>

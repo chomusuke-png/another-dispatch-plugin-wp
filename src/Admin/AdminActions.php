@@ -29,23 +29,56 @@ class AdminActions
         $this->processVerificationResend();
         $this->processSmtpTest();
         $this->processImapTest();
-        $this->processManualTrigger();
-        $this->processRetroactiveWelcome();
+        $this->processUnifiedTrigger();
     }
 
-    private function processRetroactiveWelcome(): void
+    private function processUnifiedTrigger(): void
     {
-        if (!isset($_POST['adp_action_retroactive_welcome'])) {
+        if (!isset($_POST['adp_unified_trigger_submit'])) {
             return;
         }
 
-        check_admin_referer('adp_retroactive_welcome_nonce');
+        check_admin_referer('adp_unified_trigger_action', 'adp_unified_trigger_nonce');
 
-        if (function_exists('as_enqueue_async_action')) {
-            as_enqueue_async_action('adp_process_retroactive_welcome_batch', ['offset' => 0], 'adp_emails');
-            $this->redirectWithMessage('retroactive_queued');
-        } else {
+        if (!function_exists('as_schedule_single_action')) {
             $this->redirectWithMessage('test_error');
+        }
+
+        $type = sanitize_text_field(wp_unslash($_POST['adp_trigger_type'] ?? 'post'));
+        $target = sanitize_text_field(wp_unslash($_POST['adp_trigger_target'] ?? 'single'));
+
+        if ($target === 'single') {
+            $email = sanitize_email(wp_unslash($_POST['adp_single_email'] ?? ''));
+            if (!is_email($email)) {
+                $this->redirectWithMessage('invalid_email');
+            }
+
+            as_schedule_single_action(time(), 'adp_send_single_trigger_event', ['email' => $email, 'type' => $type], 'adp_emails');
+            $this->redirectWithMessage('single_trigger_queued');
+        } else {
+            if ($type === 'welcome') {
+                as_enqueue_async_action('adp_process_retroactive_welcome_batch', ['offset' => 0], 'adp_emails');
+                $this->redirectWithMessage('retroactive_queued');
+            } elseif ($type === 'monthly') {
+                as_schedule_single_action(time(), 'adp_monthly_digest_event', [0], 'adp_emails');
+                $this->redirectWithMessage('digest_queued');
+            } elseif ($type === 'weekly') {
+                as_schedule_single_action(time(), 'adp_weekly_digest_event', [0], 'adp_emails');
+                $this->redirectWithMessage('digest_queued');
+            } else {
+                $latestPosts = get_posts(['numberposts' => 1, 'post_status' => 'publish']);
+                if (!empty($latestPosts)) {
+                    as_schedule_single_action(
+                        time(), 
+                        'adp_process_batch_send', 
+                        ['post_id' => $latestPosts[0]->ID, 'offset' => 0], 
+                        'adp_emails'
+                    );
+                    $this->redirectWithMessage('instant_queued');
+                } else {
+                    $this->redirectWithMessage('no_posts');
+                }
+            }
         }
     }
 
@@ -233,56 +266,6 @@ class AdminActions
             error_log('ADP IMAP Test Error: ' . $e->getMessage());
             $this->redirectWithMessage('imap_test_error');
         }
-    }
-
-    private function processManualTrigger(): void
-    {
-        if (!isset($_POST['adp_test_content_submit']) && !isset($_POST['adp_test_content_submit_single'])) {
-            return;
-        }
-
-        check_admin_referer('adp_test_content_action', 'adp_test_content_nonce');
-
-        if (!function_exists('as_schedule_single_action')) {
-            $this->redirectWithMessage('test_error');
-        }
-
-        $frequency = get_option('adp_delivery_frequency', 'instant');
-
-        if (isset($_POST['adp_test_content_submit_single'])) {
-            $email = isset($_POST['adp_single_email']) ? sanitize_email(wp_unslash($_POST['adp_single_email'])) : '';
-            
-            if (!is_email($email)) {
-                $this->redirectWithMessage('invalid_email');
-            }
-
-            as_schedule_single_action(time(), 'adp_send_single_trigger_event', ['email' => $email], 'adp_emails');
-            $this->redirectWithMessage('single_trigger_queued');
-            return;
-        }
-
-        $messageCode = 'no_posts';
-
-        if ($frequency === 'monthly') {
-            as_schedule_single_action(time(), 'adp_monthly_digest_event', [0], 'adp_emails');
-            $messageCode = 'digest_queued';
-        } elseif ($frequency === 'weekly') {
-            as_schedule_single_action(time(), 'adp_weekly_digest_event', [0], 'adp_emails');
-            $messageCode = 'digest_queued';
-        } else {
-            $latestPosts = get_posts(['numberposts' => 1, 'post_status' => 'publish']);
-            if (!empty($latestPosts)) {
-                as_schedule_single_action(
-                    time(), 
-                    'adp_process_batch_send', 
-                    ['post_id' => $latestPosts[0]->ID, 'offset' => 0], 
-                    'adp_emails'
-                );
-                $messageCode = 'instant_queued';
-            }
-        }
-
-        $this->redirectWithMessage($messageCode);
     }
 
     private function redirectWithMessage(string $messageCode, array $additionalArgs = []): void
