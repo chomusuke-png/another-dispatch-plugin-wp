@@ -3,7 +3,7 @@
  * Plugin Name: Another Dispatch Plugin Re
  * Plugin URI:  https://github.com/chomusuke-png/another-dispatch-plugin-wp
  * Description: Sistema moderno y escalable para envíos masivos y automatizados de correos electrónicos.
- * Version:     2.6.10
+ * Version:     2.6.11
  * Author:      Zumito
  * Text Domain: another-dispatch-plugin
  *
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ADP_VERSION', '2.6.10');
+define('ADP_VERSION', '2.6.11');
 define('ADP_PATH', plugin_dir_path(__FILE__));
 define('ADP_URL', plugin_dir_url(__FILE__));
 

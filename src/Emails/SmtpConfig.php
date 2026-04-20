@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Zumito\ADP\Emails;
 
 use PHPMailer\PHPMailer\PHPMailer;
+use Zumito\ADP\Core\Logger;
+use WP_Error;
 
 class SmtpConfig
 {
     public function __construct()
     {
         add_action('phpmailer_init', [$this, 'configureSmtp']);
+        add_action('wp_mail_failed', [$this, 'logSmtpError']);
     }
 
     public function configureSmtp(PHPMailer $phpmailer): void
@@ -39,5 +42,21 @@ class SmtpConfig
         if (!empty($bounceEmail)) {
             $phpmailer->Sender = $bounceEmail; 
         }
+    }
+
+    public function logSmtpError(WP_Error $error): void
+    {
+        $errorMessage = $error->get_error_message();
+        $errorData = $error->get_error_data('wp_mail_failed');
+        
+        $logDetails = "Error Interno SMTP: " . $errorMessage;
+        
+        if (!empty($errorData) && is_array($errorData)) {
+            if (isset($errorData['phpmailer_exception_code'])) {
+                $logDetails .= " (Código PHPMailer: " . $errorData['phpmailer_exception_code'] . ")";
+            }
+        }
+
+        Logger::error($logDetails);
     }
 }

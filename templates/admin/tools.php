@@ -50,6 +50,23 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
             </div>
+
+            <div class="postbox" style="border-color: #d63638; margin-top: 20px;">
+                <div class="postbox-header" style="background: #fbeaea; border-bottom-color: #f8cacc;">
+                    <h2 class="hndle" style="color: #d63638;">Botón de Pánico</h2>
+                </div>
+                <div class="inside">
+                    <p style="font-size: 13px; color: #555;">Si cometiste un error en la publicación o el servidor está saturado, usa este botón para cancelar inmediatamente todos los correos que estén esperando en la cola.</p>
+                    <form method="post" action="">
+                        <?php wp_nonce_field('adp_emergency_stop_action', 'adp_emergency_stop_nonce'); ?>
+                        <input type="hidden" name="adp_redirect_to" value="adp-tools">
+                        <button type="submit" name="adp_emergency_stop_submit" class="button button-primary" style="background: #d63638; border-color: #d63638; color: #fff; width: 100%; text-align: center;" onclick="return confirm('¿ESTÁS ABSOLUTAMENTE SEGURO?\n\nEsto eliminará toda la cola actual de correos (bienvenidas, resúmenes, posts). Los correos que ya salieron de tu servidor no pueden recuperarse.');">
+                            Detener Todos los Envíos
+                        </button>
+                    </form>
+                </div>
+            </div>
+
         </div>
 
         <div style="flex: 2; min-width: 400px;">

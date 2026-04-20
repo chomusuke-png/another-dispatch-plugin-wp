@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zumito\ADP\Admin;
 
 use Zumito\ADP\Core\Database;
+use Zumito\ADP\Core\Logger;
 use Webklex\PHPIMAP\ClientManager;
 
 class AdminActions
@@ -30,6 +31,38 @@ class AdminActions
         $this->processSmtpTest();
         $this->processImapTest();
         $this->processUnifiedTrigger();
+        $this->processEmergencyStop();
+    }
+
+    private function processEmergencyStop(): void
+    {
+        if (!isset($_POST['adp_emergency_stop_submit'])) {
+            return;
+        }
+
+        check_admin_referer('adp_emergency_stop_action', 'adp_emergency_stop_nonce');
+
+        if (!function_exists('as_unschedule_all_actions')) {
+            $this->redirectWithMessage('test_error');
+        }
+
+        $hooksToClear = [
+            'adp_process_batch_send',
+            'adp_process_retroactive_welcome_batch',
+            'adp_weekly_digest_event',
+            'adp_monthly_digest_event',
+            'adp_send_welcome_email_event',
+            'adp_send_verification_email_event',
+            'adp_send_single_trigger_event'
+        ];
+
+        foreach ($hooksToClear as $hook) {
+            as_unschedule_all_actions($hook, [], 'adp_emails');
+        }
+
+        Logger::error('EMERGENCIA: El administrador ha activado el Botón de Pánico. Todos los envíos en cola han sido cancelados.');
+
+        $this->redirectWithMessage('emergency_stop_success');
     }
 
     private function processUnifiedTrigger(): void
@@ -263,7 +296,7 @@ class AdminActions
 
             $this->redirectWithMessage('imap_test_success');
         } catch (\Exception $e) {
-            error_log('ADP IMAP Test Error: ' . $e->getMessage());
+            Logger::error('ADP IMAP Test Error: ' . $e->getMessage());
             $this->redirectWithMessage('imap_test_error');
         }
     }

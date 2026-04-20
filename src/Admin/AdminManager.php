@@ -218,25 +218,26 @@ class AdminManager
     private function getFeedbackMessage(string $code): array
     {
         $messages = [
-            'deleted'        => ['msg' => 'Suscriptor eliminado.', 'type' => 'success'],
-            'resent_success' => ['msg' => 'Correo de verificación reenviado correctamente.', 'type' => 'success'],
-            'test_success'   => ['msg' => 'Correo de prueba SMTP enviado.', 'type' => 'success'],
-            'test_error'     => ['msg' => 'Error SMTP o Action Scheduler no activo.', 'type' => 'error'],
-            'imap_test_success'=> ['msg' => 'Conexión IMAP establecida correctamente.', 'type' => 'success'],
-            'imap_test_error'=> ['msg' => 'Error de conexión IMAP. Revisa las credenciales o puertos.', 'type' => 'error'],
-            'imap_test_empty'=> ['msg' => 'Faltan datos para realizar la prueba IMAP.', 'type' => 'warning'],
-            'digest_queued'  => ['msg' => 'Resumen encolado para envío.', 'type' => 'success'],
-            'instant_queued' => ['msg' => 'Envío inmediato encolado.', 'type' => 'success'],
-            'retroactive_queued' => ['msg' => 'Correos de bienvenida encolados masivamente.', 'type' => 'success'],
-            'single_trigger_queued' => ['msg' => 'El correo ha sido programado y enviado al destinatario.', 'type' => 'success'],
-            'invalid_email'  => ['msg' => 'Debes proporcionar un correo electrónico válido.', 'type' => 'error'],
-            'no_posts'       => ['msg' => 'No hay posts recientes para enviar.', 'type' => 'warning'],
-            'imported'       => [
+            'deleted'                => ['msg' => 'Suscriptor eliminado.', 'type' => 'success'],
+            'resent_success'         => ['msg' => 'Correo de verificación reenviado correctamente.', 'type' => 'success'],
+            'test_success'           => ['msg' => 'Correo de prueba SMTP enviado.', 'type' => 'success'],
+            'test_error'             => ['msg' => 'Error SMTP o Action Scheduler no activo.', 'type' => 'error'],
+            'imap_test_success'      => ['msg' => 'Conexión IMAP establecida correctamente.', 'type' => 'success'],
+            'imap_test_error'        => ['msg' => 'Error de conexión IMAP. Revisa las credenciales o puertos.', 'type' => 'error'],
+            'imap_test_empty'        => ['msg' => 'Faltan datos para realizar la prueba IMAP.', 'type' => 'warning'],
+            'digest_queued'          => ['msg' => 'Resumen encolado para envío.', 'type' => 'success'],
+            'instant_queued'         => ['msg' => 'Envío inmediato encolado.', 'type' => 'success'],
+            'retroactive_queued'     => ['msg' => 'Correos de bienvenida encolados masivamente.', 'type' => 'success'],
+            'single_trigger_queued'  => ['msg' => 'El correo ha sido programado y enviado al destinatario.', 'type' => 'success'],
+            'emergency_stop_success' => ['msg' => 'Todos los envíos en cola han sido detenidos y cancelados exitosamente.', 'type' => 'success'],
+            'invalid_email'          => ['msg' => 'Debes proporcionar un correo electrónico válido.', 'type' => 'error'],
+            'no_posts'               => ['msg' => 'No hay posts recientes para enviar.', 'type' => 'warning'],
+            'imported'               => [
                 'msg'  => 'Importación completada (' . (isset($_GET['count']) ? intval($_GET['count']) : 0) . ' registros).',
                 'type' => 'success'
             ],
-            'import_error'   => ['msg' => 'Error al subir el archivo.', 'type' => 'error'],
-            'invalid_file'   => ['msg' => 'Archivo no válido. Solo CSV.', 'type' => 'error'],
+            'import_error'           => ['msg' => 'Error al subir el archivo.', 'type' => 'error'],
+            'invalid_file'           => ['msg' => 'Archivo no válido. Solo CSV.', 'type' => 'error'],
         ];
 
         return $messages[$code] ?? ['msg' => 'Acción procesada.', 'type' => 'success'];
