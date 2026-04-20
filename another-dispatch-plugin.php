@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ADP_VERSION', '2.6.0');
+define('ADP_VERSION', '2.6.10');
 define('ADP_PATH', plugin_dir_path(__FILE__));
 define('ADP_URL', plugin_dir_url(__FILE__));
 
