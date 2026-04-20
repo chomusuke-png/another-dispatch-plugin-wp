@@ -82,6 +82,7 @@ class AdminActions
 
         if ($target === 'single') {
             $email = sanitize_email(wp_unslash($_POST['adp_single_email'] ?? ''));
+            
             if (!is_email($email)) {
                 $this->redirectWithMessage('invalid_email');
             }
@@ -100,6 +101,7 @@ class AdminActions
                 $this->redirectWithMessage('digest_queued');
             } else {
                 $latestPosts = get_posts(['numberposts' => 1, 'post_status' => 'publish']);
+                
                 if (!empty($latestPosts)) {
                     as_schedule_single_action(
                         time(), 
@@ -157,43 +159,54 @@ class AdminActions
 
         check_admin_referer('adp_import_csv', 'adp_import_nonce');
 
-        if (empty($_FILES['adp_import_file']['tmp_name'])) {
+        if (!isset($_FILES['adp_import_file']) || !is_array($_FILES['adp_import_file'])) {
             $this->redirectWithMessage('import_error');
         }
 
         $fileArray = wp_unslash($_FILES['adp_import_file']);
+
+        if (empty($fileArray['tmp_name']) || $fileArray['error'] !== UPLOAD_ERR_OK) {
+            $this->redirectWithMessage('import_error');
+        }
+
+        $fileName = sanitize_file_name($fileArray['name']);
+        $fileType = wp_check_filetype($fileName);
         
-        $fileType = wp_check_filetype(basename($fileArray['name']));
         if ($fileType['ext'] !== 'csv') {
             $this->redirectWithMessage('invalid_file');
         }
 
-        $tmpName = sanitize_text_field($fileArray['tmp_name']);
-        $fileStream = fopen($tmpName, 'r');
+        $temporaryFilePath = (string) $fileArray['tmp_name'];
+
+        if (!is_uploaded_file($temporaryFilePath)) {
+            $this->redirectWithMessage('import_error');
+        }
+
+        $fileStream = fopen($temporaryFilePath, 'r');
         
         if ($fileStream === false) {
             $this->redirectWithMessage('import_error');
         }
 
-        $chunk = [];
+        $emailChunk = [];
         $totalImported = 0;
         
-        while (($csvData = fgetcsv($fileStream, 2000, ',')) !== false) {
-            $rawEmail = isset($csvData[0]) ? trim($csvData[0]) : '';
-            $email = sanitize_email($rawEmail);
+        while (($csvRowData = fgetcsv($fileStream, 2000, ',')) !== false) {
+            $rawEmail = isset($csvRowData[0]) ? trim((string) $csvRowData[0]) : '';
+            $sanitizedEmail = sanitize_email($rawEmail);
             
-            if (is_email($email)) {
-                $chunk[] = $email;
+            if (is_email($sanitizedEmail)) {
+                $emailChunk[] = $sanitizedEmail;
             }
 
-            if (count($chunk) >= 100) {
-                $totalImported += $this->database->bulkInsert($chunk);
-                $chunk = []; 
+            if (count($emailChunk) >= 100) {
+                $totalImported += $this->database->bulkInsert($emailChunk);
+                $emailChunk = []; 
             }
         }
         
-        if (!empty($chunk)) {
-            $totalImported += $this->database->bulkInsert($chunk);
+        if (!empty($emailChunk)) {
+            $totalImported += $this->database->bulkInsert($emailChunk);
         }
 
         fclose($fileStream);
@@ -304,6 +317,7 @@ class AdminActions
     private function redirectWithMessage(string $messageCode, array $additionalArgs = []): void
     {
         $targetPage = 'another-dispatch-plugin';
+        
         if (isset($_POST['adp_redirect_to'])) {
             $targetPage = sanitize_text_field(wp_unslash($_POST['adp_redirect_to']));
         } elseif (isset($_REQUEST['page'])) {
