@@ -19,6 +19,7 @@ class AdminSettings
         $sanitizeHexColorArgs = ['sanitize_callback' => 'sanitize_hex_color'];
 
         register_setting('adp_plugin_settings', 'adp_delivery_frequency', $sanitizeTextFieldArgs);
+        register_setting('adp_plugin_settings', 'adp_delivery_time', $sanitizeTextFieldArgs);
         register_setting('adp_plugin_settings', 'adp_sender_email', $sanitizeEmailArgs);
         register_setting('adp_plugin_settings', 'adp_batch_size', $sanitizeIntegerArgs);
         register_setting('adp_plugin_settings', 'adp_batch_delay', $sanitizeIntegerArgs);

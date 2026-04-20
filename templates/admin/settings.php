@@ -118,6 +118,17 @@ if (!defined('ABSPATH')) {
                                 <span><strong>Resumen Mensual</strong><br><small style="color:#666; margin-left: 25px; display:block;">Recopilación de posts del mes.</small></span>
                             </label>
                         </div>
+
+                        <hr style="margin: 20px 0; border-top: 1px solid #f0f0f1;">
+
+                        <p>
+                            <label class="adp-label-title" style="font-weight: 600;">Hora de Envío:</label>
+                            <input type="time" name="adp_delivery_time" value="<?php echo esc_attr(get_option('adp_delivery_time', '08:00')); ?>" class="widefat" style="max-width: 150px; display: block; margin-top: 5px;">
+                            <span class="description" style="display:block; margin-top:5px; font-size: 12px; line-height: 1.4;">
+                                Define a qué hora exacta comenzará a dispararse la cola de correos. <br>
+                                <em>La hora actual en tu WordPress es: <strong><?php echo esc_html(wp_date('H:i')); ?></strong></em>
+                            </span>
+                        </p>
                     </div>
                 </div>
 
