@@ -13,9 +13,6 @@ class Shortcode
         add_shortcode('adp_subscribe', [$this, 'renderShortcode']);
     }
 
-    /**
-     * @param array<string, mixed>|string $attributes
-     */
     public function renderShortcode($attributes = []): string
     {
         $parsedAttributes = shortcode_atts([

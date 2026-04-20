@@ -21,10 +21,6 @@ class Widget extends WP_Widget
         });
     }
 
-    /**
-     * @param array<string, mixed> $args
-     * @param array<string, mixed> $instance
-     */
     public function widget($args, $instance): void
     {
         echo $args['before_widget'] ?? '';
@@ -42,9 +38,6 @@ class Widget extends WP_Widget
         echo $args['after_widget'] ?? '';
     }
 
-    /**
-     * @param array<string, mixed> $instance
-     */
     public function form($instance): void
     {
         $title = $instance['title'] ?? 'Suscríbete';
@@ -67,11 +60,6 @@ class Widget extends WP_Widget
         <?php
     }
 
-    /**
-     * @param array<string, mixed> $newInstance
-     * @param array<string, mixed> $oldInstance
-     * @return array<string, mixed>
-     */
     public function update($newInstance, $oldInstance): array
     {
         $instance = [];
