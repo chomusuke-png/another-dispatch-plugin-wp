@@ -30,6 +30,7 @@ if (!defined('ABSPATH')) {
         <div style="display:none; visibility:hidden; opacity:0; height:0;">
             <label for="adp_honey_check">Si eres humano, deja esto vacío:</label>
             <input type="text" name="adp_honey_check" id="adp_honey_check" value="" autocomplete="off" tabindex="-1">
+            <input type="hidden" name="adp_time_trap" value="<?php echo esc_attr((string)time()); ?>">
         </div>
 
         <div class="adp-input-group">

@@ -44,6 +44,20 @@ if (!defined('ABSPATH')) {
             </div>
         </div>
 
+        <div class="postbox" style="border: 1px solid #1e1e1e; background: #23282d;">
+            <div class="postbox-header" style="background: #1e1e1e; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="hndle" style="color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <span class="dashicons dashicons-editor-code" style="color: #44ccff;"></span> Consola en Vivo
+                </h2>
+                <button type="button" id="adp-clear-console-btn" class="button button-small" style="background: #333; color: #fff; border-color: #000;">Limpiar</button>
+            </div>
+            <div class="inside" style="padding: 0; margin: 0;">
+                <div id="adp-live-console-output" style="padding: 15px; height: 250px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #ccc; line-height: 1.6;">
+                    <span style="color:#888;">> Conectando al servidor...</span>
+                </div>
+            </div>
+        </div>
+
         <div class="postbox">
             <div class="postbox-header">
                 <h2 class="hndle">Actividad Reciente</h2>

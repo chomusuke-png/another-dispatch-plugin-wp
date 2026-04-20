@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Admin;
 
+use Zumito\ADP\Core\Logger;
 use ActionScheduler;
 use Exception;
 
@@ -13,6 +14,49 @@ class AdminAjax
     {
         add_action('wp_ajax_adp_refresh_debug_stats', [$this, 'refreshDebugStats']);
         add_action('wp_ajax_adp_render_preview', [$this, 'renderPreview']);
+        add_action('wp_ajax_adp_get_live_console', [$this, 'getLiveConsole']);
+    }
+
+    public function getLiveConsole(): void
+    {
+        try {
+            check_ajax_referer('adp_debug_refresh_nonce', 'nonce');
+
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Unauthorized access'], 403);
+            }
+
+            // Opcional: limpiar log si se manda el flag por POST
+            if (isset($_POST['clear_log']) && sanitize_text_field(wp_unslash($_POST['clear_log'])) === 'true') {
+                Logger::clearLogs();
+                wp_send_json_success(['html' => '<span style="color:#00ff00;">> Consola limpiada por el usuario.</span><br>']);
+            }
+
+            $lines = Logger::getRecentLogs(100);
+            $formattedHtml = '';
+
+            if (empty($lines)) {
+                $formattedHtml = '<span style="color:#888;">> Esperando actividad en el sistema...</span><br>';
+            } else {
+                foreach ($lines as $line) {
+                    $color = '#cccccc'; // Default
+                    if (strpos($line, '[SUCCESS]') !== false) {
+                        $color = '#00ff00';
+                    } elseif (strpos($line, '[ERROR]') !== false) {
+                        $color = '#ff4444';
+                    } elseif (strpos($line, '[WARNING]') !== false) {
+                        $color = '#ffcc00';
+                    } elseif (strpos($line, '[INFO]') !== false) {
+                        $color = '#44ccff';
+                    }
+                    $formattedHtml .= '<span style="color:' . esc_attr($color) . ';">' . esc_html($line) . '</span><br>';
+                }
+            }
+
+            wp_send_json_success(['html' => $formattedHtml]);
+        } catch (Exception $exception) {
+            wp_send_json_error(['message' => $exception->getMessage()], 500);
+        }
     }
 
     public function renderPreview(): void

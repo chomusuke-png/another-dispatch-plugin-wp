@@ -9,6 +9,8 @@ use Zumito\ADP\Core\Database;
 class SubscribeHandler
 {
     private Database $database;
+    private const MAX_ATTEMPTS = 3;
+    private const RATE_LIMIT_MINUTES = 15;
 
     public function __construct(Database $database)
     {
@@ -20,12 +22,16 @@ class SubscribeHandler
 
     public function handleSubscription(): void
     {
-        if (!empty($_POST['adp_honey_check'])) {
+        if ($this->isSpamTrapTriggered()) {
             $this->redirectBackWithSuccess('subscribed');
         }
 
         if (!isset($_POST['adp_subscribe_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['adp_subscribe_nonce'])), 'adp_subscribe_action')) {
             wp_die('Error de seguridad. La petición no es válida.', 'Error', ['response' => 403]);
+        }
+
+        if ($this->isRateLimited()) {
+            $this->redirectBackWithError('rate_limited');
         }
 
         if (empty($_POST['adp_email'])) {
@@ -64,6 +70,58 @@ class SubscribeHandler
         }
 
         $this->redirectBackWithSuccess('subscribed');
+    }
+
+    private function isSpamTrapTriggered(): bool
+    {
+        if (!empty($_POST['adp_honey_check'])) {
+            return true;
+        }
+
+        if (!isset($_POST['adp_time_trap'])) {
+            return true;
+        }
+
+        $formGenerationTime = (int) $_POST['adp_time_trap'];
+        $currentTime = time();
+        $timeDifference = $currentTime - $formGenerationTime;
+
+        if ($timeDifference < 3) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isRateLimited(): bool
+    {
+        $ipAddress = $this->getClientIp();
+        $transientKey = 'adp_rl_' . md5($ipAddress);
+        $attempts = (int) get_transient($transientKey);
+
+        if ($attempts >= self::MAX_ATTEMPTS) {
+            return true;
+        }
+
+        set_transient($transientKey, $attempts + 1, self::RATE_LIMIT_MINUTES * MINUTE_IN_SECONDS);
+        
+        return false;
+    }
+
+    private function getClientIp(): string
+    {
+        $ipAddress = '';
+        
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ipList = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ipAddress = trim($ipList[0]);
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ipAddress = $_SERVER['REMOTE_ADDR'];
+        }
+
+        return sanitize_text_field($ipAddress);
     }
 
     private function redirectBackWithError(string $errorCode): void
