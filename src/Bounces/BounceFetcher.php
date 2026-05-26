@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zumito\ADP\Bounces;
 
 use Zumito\ADP\Core\Database;
+use Zumito\ADP\Core\Logger;
 use Webklex\PHPIMAP\ClientManager;
 
 class BounceFetcher
@@ -46,9 +47,7 @@ class BounceFetcher
             $folder->query()->all()->setFetchBody(false)->chunk(25, function ($messages) {
                 foreach ($messages as $message) {
                     try {
-                        $body = $message->getTextBody() ?: '';
-
-                        $bouncedEmail = $this->extractEmailFromBounce($body);
+                        $bouncedEmail = $this->findBouncedEmail($message);
 
                         if ($bouncedEmail) {
                             $subscriber = $this->database->getSubscriber($bouncedEmail);
@@ -77,15 +76,70 @@ class BounceFetcher
         }
     }
 
+    private function findBouncedEmail($message): ?string
+    {
+        $body = $message->getTextBody() ?: '';
+        $found = $this->extractEmailFromBounce($body);
+        if ($found) {
+            return $found;
+        }
+
+        $htmlBody = $message->getHTMLBody() ?: '';
+        $found = $this->extractEmailFromBounce(strip_tags($htmlBody));
+        if ($found) {
+            return $found;
+        }
+
+        try {
+            $attachments = $message->getAttachments();
+            foreach ($attachments as $attachment) {
+                $partContent = $attachment->getContent();
+                if (empty($partContent)) {
+                    continue;
+                }
+                $found = $this->extractEmailFromBounce($partContent);
+                if ($found) {
+                    return $found;
+                }
+            }
+        } catch (\Exception $e) {
+            Logger::warning("No se pudieron leer attachments del mensaje: " . $e->getMessage());
+        }
+
+        try {
+            $headers = $message->getHeader();
+            if ($headers) {
+                $xFailed = $headers->get('x-failed-recipients');
+                if ($xFailed) {
+                    $raw = is_object($xFailed) ? $xFailed->first() : (string) $xFailed;
+                    $email = sanitize_email(trim((string) $raw));
+                    if (is_email($email)) {
+                        return $email;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // e
+        }
+
+        return null;
+    }
+
     private function extractEmailFromBounce(string $body): ?string
     {
-        $pattern = '/Final-Recipient:\s*rfc822;\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i';
-        if (preg_match($pattern, $body, $matches)) {
+        if (empty($body)) {
+            return null;
+        }
+
+        if (preg_match('/Final-Recipient:\s*rfc822;\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i', $body, $matches)) {
             return sanitize_email($matches[1]);
         }
 
-        $fallbackPattern = '/(?:failed to deliver to|could not be delivered to|delivery failed.*?)\s*<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?/i';
-        if (preg_match($fallbackPattern, $body, $matches)) {
+        if (preg_match('/Original-Recipient:\s*rfc822;\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i', $body, $matches)) {
+            return sanitize_email($matches[1]);
+        }
+
+        if (preg_match('/(?:failed to deliver(?:y)? to|could not be delivered to|delivery failed.*?|no such user.*?|usuario desconocido.*?|buzón no encontrado.*?)\s*<?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>?/i', $body, $matches)) {
             return sanitize_email($matches[1]);
         }
 
