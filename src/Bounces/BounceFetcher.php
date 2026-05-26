@@ -54,7 +54,11 @@ class BounceFetcher
                     $subscriber = $this->database->getSubscriber($bouncedEmail);
                     if ($subscriber !== null && $subscriber->status !== 'bounced') {
                         $this->database->updateSubscriberStatus($bouncedEmail, 'bounced');
+                        Logger::info("Bounce procesado: $bouncedEmail");
                     }
+                } else {
+                    $subject = $message->getSubject() ?? '(sin asunto)';
+                    Logger::warning("Mensaje IMAP no reconocido como bounce. Asunto: $subject");
                 }
 
                 $message->delete();

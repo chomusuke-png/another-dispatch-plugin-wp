@@ -72,11 +72,16 @@ class Activator
 
     private static function scheduleMaintenanceTasks(): void
     {
-        if (function_exists('as_next_scheduled_action')) {
-            $nextSchedule = as_next_scheduled_action('adp_daily_cleanup_event');
-            if ($nextSchedule === false) {
-                as_schedule_recurring_action(time(), DAY_IN_SECONDS, 'adp_daily_cleanup_event', [], 'adp_emails');
-            }
+        if (!function_exists('as_next_scheduled_action')) {
+            return;
+        }
+
+        if (as_next_scheduled_action('adp_daily_cleanup_event') === false) {
+            as_schedule_recurring_action(time(), DAY_IN_SECONDS, 'adp_daily_cleanup_event', [], 'adp_emails');
+        }
+
+        if (as_next_scheduled_action('adp_process_bounces_event') === false) {
+            as_schedule_recurring_action(time(), 12 * HOUR_IN_SECONDS, 'adp_process_bounces_event', [], 'adp_emails');
         }
     }
 }
