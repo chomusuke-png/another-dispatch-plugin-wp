@@ -43,32 +43,37 @@ class BounceFetcher
             $client->connect();
             $folder = $client->getFolder('INBOX');
 
-            $messages = $folder->query()->all()->get();
+            $folder->query()->all()->setFetchBody(false)->chunk(25, function ($messages) {
+                foreach ($messages as $message) {
+                    try {
+                        $body = $message->getTextBody() ?: '';
 
-            foreach ($messages as $message) {
-                $body = $message->getTextBody() ?: $message->getHTMLBody();
-                
-                $bouncedEmail = $this->extractEmailFromBounce($body);
+                        $bouncedEmail = $this->extractEmailFromBounce($body);
 
-                if ($bouncedEmail) {
-                    $subscriber = $this->database->getSubscriber($bouncedEmail);
-                    if ($subscriber !== null && $subscriber->status !== 'bounced') {
-                        $this->database->updateSubscriberStatus($bouncedEmail, 'bounced');
-                        Logger::info("Bounce procesado: $bouncedEmail");
+                        if ($bouncedEmail) {
+                            $subscriber = $this->database->getSubscriber($bouncedEmail);
+                            if ($subscriber !== null && $subscriber->status !== 'bounced') {
+                                $this->database->updateSubscriberStatus($bouncedEmail, 'bounced');
+                                Logger::info("Bounce procesado: $bouncedEmail");
+                            }
+                        } else {
+                            $subject = $message->getSubject() ?? '(sin asunto)';
+                            Logger::warning("Mensaje IMAP no reconocido como bounce. Asunto: $subject");
+                        }
+
+                        $message->delete();
+
+                    } catch (\Exception $e) {
+                        Logger::error("Error procesando mensaje IMAP individual: " . $e->getMessage());
                     }
-                } else {
-                    $subject = $message->getSubject() ?? '(sin asunto)';
-                    Logger::warning("Mensaje IMAP no reconocido como bounce. Asunto: $subject");
                 }
-
-                $message->delete();
-            }
+            });
 
             $client->expunge();
             $client->disconnect();
 
         } catch (\Exception $e) {
-            error_log('ADP IMAP Bounce Error: ' . $e->getMessage());
+            Logger::error('ADP IMAP Bounce Error: ' . $e->getMessage());
         }
     }
 
