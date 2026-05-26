@@ -29,6 +29,7 @@ if (!defined('ABSPATH')) {
                             <option value="all" <?php selected($currentFilter, 'all'); ?>>Todos</option>
                             <option value="active" <?php selected($currentFilter, 'active'); ?>>Activos</option>
                             <option value="pending" <?php selected($currentFilter, 'pending'); ?>>Pendientes</option>
+                            <option value="bounced" <?php selected($currentFilter, 'bounced'); ?>>Rebotados</option>
                         </select>
                     </form>
                 </div>
@@ -127,6 +128,10 @@ if (!defined('ABSPATH')) {
                     <div style="flex: 1; text-align: center; background: #fff8e5; padding: 10px; border-radius: 4px;">
                         <strong style="display: block; font-size: 18px; color: #dba617;"><?php echo esc_html((string)$countPending); ?></strong>
                         <span style="font-size: 11px; text-transform: uppercase; color: #666;">Pendientes</span>
+                    </div>
+                    <div style="flex: 1; text-align: center; background: #fbeaea; padding: 10px; border-radius: 4px;">
+                        <strong style="display: block; font-size: 18px; color: #d63638;"><?php echo esc_html((string)$countBounced); ?></strong>
+                        <span style="font-size: 11px; text-transform: uppercase; color: #666;">Rebotados</span>
                     </div>
                 </div>
             </div>

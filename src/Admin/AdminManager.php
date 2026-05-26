@@ -100,12 +100,15 @@ class AdminManager
         $countTotal   = $this->database->getSubscriberCount('all');
         $countActive  = $this->database->getSubscriberCount('active');
         $countPending = $this->database->getSubscriberCount('pending');
+        $countBounced = $this->database->getSubscriberCount('bounced');
 
         $totalItems = $countTotal;
         if ($currentFilter === 'active') {
             $totalItems = $countActive;
         } elseif ($currentFilter === 'pending') {
             $totalItems = $countPending;
+        } elseif ($currentFilter === 'bounced') {
+            $totalItems = $countBounced;
         }
 
         $totalPages = (int) ceil($totalItems / $perPage);
