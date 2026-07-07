@@ -7,10 +7,15 @@ namespace Zumito\ADP\Bounces;
 use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Database;
 use Zumito\ADP\Core\Logger;
+use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
 
 class BounceFetcher
 {
+    // Buzón donde se guardan los correos que no se pudieron identificar automáticamente
+    // como un rebote, para que un administrador los revise manualmente.
+    public const UNPROCESSED_FOLDER = 'ADP-Sin-Procesar';
+
     private Database $database;
 
     public function __construct(Database $database)
@@ -31,24 +36,15 @@ class BounceFetcher
         }
 
         try {
-            $cm = new ClientManager();
-            $client = $cm->make([
-                'host'          => $host,
-                'port'          => $port,
-                'encryption'    => 'ssl',
-                'validate_cert' => true,
-                'username'      => $user,
-                'password'      => $pass,
-                'protocol'      => 'imap'
-            ]);
-
-            $client->connect();
+            $client = self::connect($host, $port, $user, $pass);
             $folder = $client->getFolder('INBOX');
 
-            $folder->query()->all()->setFetchBody(false)->chunk(25, function ($messages) {
+            self::ensureFolderExists($client, self::UNPROCESSED_FOLDER);
+
+            $folder->query()->all()->chunk(25, function ($messages) {
                 foreach ($messages as $message) {
                     try {
-                        $bouncedEmail = $this->findBouncedEmail($message);
+                        $bouncedEmail = BounceParser::findBouncedEmail($message);
 
                         if ($bouncedEmail) {
                             $subscriber = $this->database->getSubscriber($bouncedEmail);
@@ -56,12 +52,13 @@ class BounceFetcher
                                 $this->database->updateSubscriberStatus($bouncedEmail, 'bounced');
                                 Logger::info("Bounce procesado: $bouncedEmail");
                             }
+
+                            $message->delete();
                         } else {
                             $subject = $message->getSubject() ?? '(sin asunto)';
-                            Logger::warning("Mensaje IMAP no reconocido como bounce. Asunto: $subject");
+                            Logger::warning("Mensaje IMAP no reconocido como bounce. Movido a '" . self::UNPROCESSED_FOLDER . "' para revisión manual. Asunto: $subject");
+                            $message->move(self::UNPROCESSED_FOLDER);
                         }
-
-                        $message->delete();
 
                     } catch (\Exception $e) {
                         Logger::error("Error procesando mensaje IMAP individual: " . $e->getMessage());
@@ -77,73 +74,28 @@ class BounceFetcher
         }
     }
 
-    private function findBouncedEmail($message): ?string
+    public static function connect(string $host, int $port, string $user, string $pass): Client
     {
-        $body = $message->getTextBody() ?: '';
-        $found = $this->extractEmailFromBounce($body);
-        if ($found) {
-            return $found;
-        }
+        $clientManager = new ClientManager();
+        $client = $clientManager->make([
+            'host'          => $host,
+            'port'          => $port,
+            'encryption'    => 'ssl',
+            'validate_cert' => true,
+            'username'      => $user,
+            'password'      => $pass,
+            'protocol'      => 'imap'
+        ]);
 
-        $htmlBody = $message->getHTMLBody() ?: '';
-        $found = $this->extractEmailFromBounce(strip_tags($htmlBody));
-        if ($found) {
-            return $found;
-        }
+        $client->connect();
 
-        try {
-            $attachments = $message->getAttachments();
-            foreach ($attachments as $attachment) {
-                $partContent = $attachment->getContent();
-                if (empty($partContent)) {
-                    continue;
-                }
-                $found = $this->extractEmailFromBounce($partContent);
-                if ($found) {
-                    return $found;
-                }
-            }
-        } catch (\Exception $e) {
-            Logger::warning("No se pudieron leer attachments del mensaje: " . $e->getMessage());
-        }
-
-        try {
-            $headers = $message->getHeader();
-            if ($headers) {
-                $xFailed = $headers->get('x-failed-recipients');
-                if ($xFailed) {
-                    $raw = is_object($xFailed) ? $xFailed->first() : (string) $xFailed;
-                    $email = sanitize_email(trim((string) $raw));
-                    if (is_email($email)) {
-                        return $email;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // e
-        }
-
-        return null;
+        return $client;
     }
 
-    private function extractEmailFromBounce(string $body): ?string
+    public static function ensureFolderExists(Client $client, string $folderPath): void
     {
-        if (empty($body)) {
-            return null;
+        if ($client->getFolder($folderPath) === null) {
+            $client->createFolder($folderPath);
         }
-
-        if (preg_match('/Final-Recipient:\s*rfc822;\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i', $body, $matches)) {
-            return sanitize_email($matches[1]);
-        }
-
-        if (preg_match('/Original-Recipient:\s*rfc822;\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i', $body, $matches)) {
-            return sanitize_email($matches[1]);
-        }
-
-        if (preg_match('/(?:failed to deliver(?:y)? to|could not be delivered to|delivery failed.*?|no such user.*?|usuario desconocido.*?|buzón no encontrado.*?)\s*<?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>?/i', $body, $matches)) {
-            return sanitize_email($matches[1]);
-        }
-
-        return null;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Admin;
 
+use Zumito\ADP\Bounces\BounceReviewer;
 use Zumito\ADP\Core\Database;
 
 class AdminManager
@@ -54,6 +55,15 @@ class AdminManager
             'manage_options',
             'adp-tools',
             [$this, 'renderToolsPage']
+        );
+
+        add_submenu_page(
+            'another-dispatch-plugin',
+            'Rebotes en Revisión',
+            'Bounces',
+            'manage_options',
+            'adp-bounces',
+            [$this, 'renderBouncesPage']
         );
 
         add_submenu_page(
@@ -159,6 +169,28 @@ class AdminManager
         require ADP_PATH . 'templates/admin/tools.php';
     }
 
+    public function renderBouncesPage(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+
+        $message = '';
+        $messageType = 'success';
+
+        if (isset($_GET['adp_msg'])) {
+            $messageCode = sanitize_text_field(wp_unslash($_GET['adp_msg']));
+            $feedback = $this->getFeedbackMessage($messageCode);
+            $message = $feedback['msg'];
+            $messageType = $feedback['type'];
+        }
+
+        $reviewer = new BounceReviewer($this->database);
+        $pendingMessages = $reviewer->listPendingMessages(50);
+
+        require ADP_PATH . 'templates/admin/bounces.php';
+    }
+
     public function renderSettingsPage(): void
     {
         if (!current_user_can('manage_options')) {
@@ -241,6 +273,9 @@ class AdminManager
             ],
             'import_error'           => ['msg' => 'Error al subir el archivo.', 'type' => 'error'],
             'invalid_file'           => ['msg' => 'Archivo no válido. Solo CSV.', 'type' => 'error'],
+            'bounce_review_success'  => ['msg' => 'Mensaje procesado correctamente.', 'type' => 'success'],
+            'bounce_review_error'    => ['msg' => 'No se pudo procesar el mensaje. Puede que ya no exista en el buzón.', 'type' => 'error'],
+            'bounce_review_invalid_email' => ['msg' => 'Debes indicar un correo válido para esta acción.', 'type' => 'error'],
         ];
 
         return $messages[$code] ?? ['msg' => 'Acción procesada.', 'type' => 'success'];

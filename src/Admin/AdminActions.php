@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Admin;
 
+use Zumito\ADP\Bounces\BounceFetcher;
+use Zumito\ADP\Bounces\BounceReviewer;
 use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Database;
 use Zumito\ADP\Core\Logger;
-use Webklex\PHPIMAP\ClientManager;
 
 class AdminActions
 {
@@ -33,6 +34,7 @@ class AdminActions
         $this->processImapTest();
         $this->processUnifiedTrigger();
         $this->processEmergencyStop();
+        $this->processBounceReview();
     }
 
     private function processEmergencyStop(): void
@@ -294,18 +296,7 @@ class AdminActions
         }
 
         try {
-            $clientManager = new ClientManager();
-            $client = $clientManager->make([
-                'host'          => $host,
-                'port'          => $port,
-                'encryption'    => 'ssl',
-                'validate_cert' => true,
-                'username'      => $user,
-                'password'      => $pass,
-                'protocol'      => 'imap'
-            ]);
-
-            $client->connect();
+            $client = BounceFetcher::connect($host, $port, $user, $pass);
             $client->disconnect();
 
             $this->redirectWithMessage('imap_test_success');
@@ -313,6 +304,32 @@ class AdminActions
             Logger::error('ADP IMAP Test Error: ' . $e->getMessage());
             $this->redirectWithMessage('imap_test_error');
         }
+    }
+
+    private function processBounceReview(): void
+    {
+        if (!isset($_POST['adp_bounce_decision'])) {
+            return;
+        }
+
+        check_admin_referer('adp_bounce_review_action', 'adp_bounce_review_nonce');
+
+        $uid = isset($_POST['adp_bounce_uid']) ? absint($_POST['adp_bounce_uid']) : 0;
+        $decision = sanitize_text_field(wp_unslash($_POST['adp_bounce_decision']));
+        $email = isset($_POST['adp_bounce_email']) ? sanitize_email(wp_unslash($_POST['adp_bounce_email'])) : '';
+
+        if ($uid <= 0 || !in_array($decision, ['bounced', 'active', 'discard'], true)) {
+            $this->redirectWithMessage('bounce_review_error');
+        }
+
+        if ($decision !== 'discard' && !is_email($email)) {
+            $this->redirectWithMessage('bounce_review_invalid_email');
+        }
+
+        $reviewer = new BounceReviewer($this->database);
+        $resolved = $reviewer->resolveMessage($uid, $decision, $email);
+
+        $this->redirectWithMessage($resolved ? 'bounce_review_success' : 'bounce_review_error');
     }
 
     private function redirectWithMessage(string $messageCode, array $additionalArgs = []): void
