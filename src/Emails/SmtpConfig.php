@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zumito\ADP\Emails;
 
 use PHPMailer\PHPMailer\PHPMailer;
+use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Logger;
 use WP_Error;
 
@@ -29,7 +30,7 @@ class SmtpConfig
         $phpmailer->SMTPAuth = true;
         $phpmailer->Port = (int) get_option('adp_smtp_port', 587);
         $phpmailer->Username = get_option('adp_smtp_user');
-        $phpmailer->Password = get_option('adp_smtp_pass');
+        $phpmailer->Password = Crypto::decrypt((string) get_option('adp_smtp_pass'));
         $phpmailer->SMTPSecure = get_option('adp_smtp_secure', 'tls');
 
         $senderEmail = get_option('adp_sender_email');

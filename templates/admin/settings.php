@@ -55,7 +55,7 @@ if (!defined('ABSPATH')) {
                         </p>
                         <p>
                             <label class="adp-label-title">Contraseña SMTP:</label>
-                            <input type="password" name="adp_smtp_pass" value="<?php echo esc_attr(get_option('adp_smtp_pass')); ?>" class="widefat">
+                            <input type="password" name="adp_smtp_pass" value="<?php echo esc_attr(\Zumito\ADP\Core\Crypto::decrypt((string) get_option('adp_smtp_pass'))); ?>" class="widefat">
                         </p>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ if (!defined('ABSPATH')) {
                         </p>
                         <p>
                             <label class="adp-label-title">Contraseña IMAP:</label>
-                            <input type="password" name="adp_imap_pass" value="<?php echo esc_attr(get_option('adp_imap_pass')); ?>" class="widefat">
+                            <input type="password" name="adp_imap_pass" value="<?php echo esc_attr(\Zumito\ADP\Core\Crypto::decrypt((string) get_option('adp_imap_pass'))); ?>" class="widefat">
                         </p>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Another Dispatch Plugin Re
+ * Plugin Name: Another Dispatch Plugin
  * Plugin URI:  https://github.com/chomusuke-png/another-dispatch-plugin-wp
  * Description: Sistema de envíos masivos y automatizados de correos electrónicos.
  * Version:     2.7.0
@@ -24,7 +24,7 @@ $composerAutoloader = ADP_PATH . 'vendor/autoload.php';
 
 if (!file_exists($composerAutoloader)) {
     add_action('admin_notices', function (): void {
-        echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin Re:</strong> Faltan dependencias. Por favor ejecuta <code>composer install --no-dev -o</code> en el directorio del plugin.</p></div>';
+        echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin:</strong> Faltan dependencias. Por favor ejecuta <code>composer install --no-dev -o</code> en el directorio del plugin.</p></div>';
     });
     return;
 }
@@ -66,7 +66,7 @@ add_action('plugins_loaded', function (): void {
 
     if (!function_exists('as_enqueue_async_action')) {
         add_action('admin_notices', function (): void {
-            echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin Re:</strong> Este plugin requiere tener instalado y activo el motor <strong>Action Scheduler</strong> (incluido en WooCommerce o disponible como plugin independiente). Ocurrió un error al intentar cargarlo desde la carpeta vendor.</p></div>';
+            echo '<div class="notice notice-error"><p><strong>Another Dispatch Plugin:</strong> Este plugin requiere tener instalado y activo el motor <strong>Action Scheduler</strong> (incluido en WooCommerce o disponible como plugin independiente). Ocurrió un error al intentar cargarlo desde la carpeta vendor.</p></div>';
         });
         return;
     }

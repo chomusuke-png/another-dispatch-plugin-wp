@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\PublicHooks;
 
+use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Database;
 
 class TrackingHandler
@@ -52,12 +53,22 @@ class TrackingHandler
         $targetUrl = home_url();
 
         if (!empty($_GET['url'])) {
-            $rawUrl = wp_unslash($_GET['url']);
-            $targetUrl = esc_url_raw($rawUrl);
+            $rawUrl = (string) wp_unslash($_GET['url']);
+            $signature = isset($_GET['sig']) ? sanitize_text_field(wp_unslash($_GET['sig'])) : '';
 
-            if (!empty($_GET['email'])) {
-                $email = sanitize_email(wp_unslash($_GET['email']));
-                $this->database->logEvent($email, 'click', $targetUrl);
+            // El enlace solo se sigue si trae la firma generada por injectTracking() al enviar
+            // el correo; evita que este endpoint público se use como open redirect arbitrario.
+            if (Crypto::verify($rawUrl, $signature)) {
+                $safeUrl = esc_url_raw($rawUrl);
+
+                if ($safeUrl !== '') {
+                    $targetUrl = $safeUrl;
+
+                    if (!empty($_GET['email'])) {
+                        $email = sanitize_email(wp_unslash($_GET['email']));
+                        $this->database->logEvent($email, 'click', $safeUrl);
+                    }
+                }
             }
         }
 

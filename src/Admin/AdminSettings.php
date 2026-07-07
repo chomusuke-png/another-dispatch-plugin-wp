@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Admin;
 
+use Zumito\ADP\Core\Crypto;
+
 class AdminSettings
 {
     public function __construct()
@@ -29,13 +31,13 @@ class AdminSettings
         register_setting('adp_plugin_settings', 'adp_smtp_port', $sanitizeIntegerArgs);
         register_setting('adp_plugin_settings', 'adp_smtp_secure', $sanitizeTextFieldArgs);
         register_setting('adp_plugin_settings', 'adp_smtp_user', $sanitizeTextFieldArgs);
-        register_setting('adp_plugin_settings', 'adp_smtp_pass', $sanitizeTextFieldArgs);
+        register_setting('adp_plugin_settings', 'adp_smtp_pass', ['sanitize_callback' => [Crypto::class, 'encrypt']]);
 
         register_setting('adp_plugin_settings', 'adp_bounce_email', $sanitizeEmailArgs);
         register_setting('adp_plugin_settings', 'adp_imap_host', $sanitizeTextFieldArgs);
         register_setting('adp_plugin_settings', 'adp_imap_port', $sanitizeIntegerArgs);
         register_setting('adp_plugin_settings', 'adp_imap_user', $sanitizeTextFieldArgs);
-        register_setting('adp_plugin_settings', 'adp_imap_pass', $sanitizeTextFieldArgs);
+        register_setting('adp_plugin_settings', 'adp_imap_pass', ['sanitize_callback' => [Crypto::class, 'encrypt']]);
 
         register_setting('adp_customizer_settings', 'adp_color_header_bg', $sanitizeHexColorArgs);
         register_setting('adp_customizer_settings', 'adp_color_header_text', $sanitizeHexColorArgs);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Admin;
 
+use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Database;
 use Zumito\ADP\Core\Logger;
 use Webklex\PHPIMAP\ClientManager;
@@ -285,7 +286,7 @@ class AdminActions
 
         $host = get_option('adp_imap_host');
         $user = get_option('adp_imap_user');
-        $pass = get_option('adp_imap_pass');
+        $pass = Crypto::decrypt((string) get_option('adp_imap_pass'));
         $port = (int) get_option('adp_imap_port', 993);
 
         if (empty($host) || empty($user) || empty($pass)) {
@@ -298,7 +299,7 @@ class AdminActions
                 'host'          => $host,
                 'port'          => $port,
                 'encryption'    => 'ssl',
-                'validate_cert' => false,
+                'validate_cert' => true,
                 'username'      => $user,
                 'password'      => $pass,
                 'protocol'      => 'imap'

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zumito\ADP\Emails;
 
+use Zumito\ADP\Core\Crypto;
 use Zumito\ADP\Core\Database;
 use Zumito\ADP\Core\Logger;
 use Exception;
@@ -200,82 +201,71 @@ class EmailSender
     {
         $subject = get_option('adp_welcome_subject', '¡Bienvenido a nuestro Newsletter!');
         $content = get_option('adp_welcome_content', '<p>Gracias por confirmar tu suscripción. Estamos felices de tenerte con nosotros.</p>');
-        $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
 
-        $htmlContent = $this->renderTemplate('welcome', [
-            'emailTitle'      => $subject, 
-            'welcomeContent'  => wpautop(wp_kses_post($content)), 
-            'unsubscribeLink' => $unsubscribeLink, 
-            'blogName'        => get_bloginfo('name')
-        ]);
-
-        $finalHtml = $this->injectTracking($htmlContent, $email);
-
-        $sent = wp_mail($email, $subject, $finalHtml, [
-            'Content-Type: text/html; charset=UTF-8', 
-            'List-Unsubscribe: <' . $unsubscribeLink . '>'
-        ]);
+        $sent = $this->deliverTrackedEmail($email, $hash, $subject, 'welcome', [
+            'emailTitle'     => $subject,
+            'welcomeContent' => wpautop(wp_kses_post($content))
+        ], 'Correo de bienvenida enviado a', 'Fallo al enviar correo de bienvenida a');
 
         if ($sent) {
-            Logger::success("Correo de bienvenida enviado a: $email");
             $this->database->updateSubscriberStatus($email, 'active');
         } else {
-            Logger::error("Fallo al enviar correo de bienvenida a: $email");
             error_log('ADP Error: No se pudo enviar el correo de bienvenida a ' . $email);
         }
     }
 
     private function dispatchPostEmail(\WP_Post $post, string $email, string $hash): void
     {
-        $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
         $featuredImage = has_post_thumbnail($post->ID) ? get_the_post_thumbnail_url($post->ID, 'large') : '';
 
-        $htmlContent = $this->renderTemplate('single', [
-            'postTitle'       => get_the_title($post->ID),
-            'postContent'     => apply_filters('the_content', $post->post_content), 
-            'postLink'        => get_permalink($post->ID), 
-            'featuredImage'   => $featuredImage, 
-            'unsubscribeLink' => $unsubscribeLink, 
-            'blogName'        => get_bloginfo('name')
-        ]);
-
-        $finalHtml = $this->injectTracking($htmlContent, $email);
-
-        $sent = wp_mail($email, get_the_title($post->ID), $finalHtml, [
-            'Content-Type: text/html; charset=UTF-8', 
-            'List-Unsubscribe: <' . $unsubscribeLink . '>'
-        ]);
-
-        if ($sent) {
-            Logger::success("Notificación de post enviada a: $email");
-        } else {
-            Logger::error("Fallo SMTP al enviar post a: $email");
-        }
+        $this->deliverTrackedEmail($email, $hash, get_the_title($post->ID), 'single', [
+            'postTitle'     => get_the_title($post->ID),
+            'postContent'   => apply_filters('the_content', $post->post_content),
+            'postLink'      => get_permalink($post->ID),
+            'featuredImage' => $featuredImage
+        ], 'Notificación de post enviada a', 'Fallo SMTP al enviar post a');
     }
 
     private function dispatchDigestEmail(array $posts, string $email, string $hash): void
     {
+        $subject = 'Resumen de Artículos - ' . get_bloginfo('name');
+
+        $this->deliverTrackedEmail($email, $hash, $subject, 'digest', [
+            'emailTitle' => $subject,
+            'postsList'  => $posts
+        ], 'Resumen enviado a', 'Fallo SMTP al enviar resumen a');
+    }
+
+    private function deliverTrackedEmail(
+        string $email,
+        string $hash,
+        string $subject,
+        string $templateName,
+        array $templateContext,
+        string $successLogMessage,
+        string $failureLogMessage
+    ): bool {
         $unsubscribeLink = $this->generateUnsubscribeLink($email, $hash);
 
-        $htmlContent = $this->renderTemplate('digest', [
-            'emailTitle'      => 'Resumen de Artículos - ' . get_bloginfo('name'), 
-            'postsList'       => $posts, 
-            'unsubscribeLink' => $unsubscribeLink, 
+        $htmlContent = $this->renderTemplate($templateName, $templateContext + [
+            'unsubscribeLink' => $unsubscribeLink,
             'blogName'        => get_bloginfo('name')
         ]);
 
         $finalHtml = $this->injectTracking($htmlContent, $email);
 
-        $sent = wp_mail($email, 'Resumen de Artículos - ' . get_bloginfo('name'), $finalHtml, [
-            'Content-Type: text/html; charset=UTF-8', 
+        $sent = wp_mail($email, $subject, $finalHtml, [
+            'Content-Type: text/html; charset=UTF-8',
             'List-Unsubscribe: <' . $unsubscribeLink . '>'
         ]);
 
         if ($sent) {
-            Logger::success("Resumen enviado a: $email");
+            Logger::success("$successLogMessage: $email");
         } else {
-            Logger::error("Fallo SMTP al enviar resumen a: $email");
+            Logger::error("$failureLogMessage: $email");
         }
+
+        return $sent;
     }
 
     private function renderTemplate(string $templateName, array $contextData): string
@@ -306,7 +296,8 @@ class EmailSender
         $html = preg_replace_callback('/href=["\'](http[s]?:\/\/[^"\']+)["\']/i', function ($matches) use ($encodedEmail) {
             $originalUrl = $matches[1];
             if (strpos($originalUrl, 'adp_action=') !== false) return $matches[0];
-            $trackingUrl = home_url('/?adp_action=track_click&email=' . $encodedEmail . '&url=' . urlencode($originalUrl));
+            $signature = Crypto::sign($originalUrl);
+            $trackingUrl = home_url('/?adp_action=track_click&email=' . $encodedEmail . '&url=' . urlencode($originalUrl) . '&sig=' . $signature);
             return 'href="' . esc_url($trackingUrl) . '"';
         }, $html);
 
